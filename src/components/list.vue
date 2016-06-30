@@ -2,10 +2,10 @@
   <div class="up-list">
     <div class="up-item" v-for="item in list">
       <div>
-          <h1>title: {{item.title}}</h1>
+          <h1>{{item.title}}</h1>
       </div>
       <div class="up-detail">
-          <span>type: {{item.type}}</span>
+          <span>一个{{item.style}}的{{item.type}}视频</span>
           <span>play times: {{item.playtime}}</span>
           <span>like: {{item.like}}</span>
           <span>commit: {{item.commit}}</span>

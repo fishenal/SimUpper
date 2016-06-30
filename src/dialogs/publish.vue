@@ -12,7 +12,23 @@
           <div class="dt-form-label">type:</div>
           <div class="dt-form-input">
             <select class="dt-select" v-model="vtype">
-              <option v-for="item in vTypeList" v-bind:value="item.id">{{item.label}}</option>
+              <option v-for="item in vTypeList" v-bind:value="item.label">{{item.label}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="dt-form-line">
+          <div class="dt-form-label">style:</div>
+          <div class="dt-form-input">
+            <select class="dt-select" v-model="vstyle">
+              <option v-for="item in vStyleList" v-bind:value="item.label">{{item.label}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="dt-form-line">
+          <div class="dt-form-label">quality:</div>
+          <div class="dt-form-input">
+            <select class="dt-select" v-model="vquality">
+              <option v-for="item in vQualityList" v-bind:value="item.label">{{item.label}}</option>
             </select>
           </div>
         </div>
@@ -33,7 +49,7 @@
 
 <script>
 import { itemStore, myStore } from '../module/store.js'
-import { vTypeList } from '../module/data.js'
+import { vTypeList, vStyleList, vQualityList } from '../module/data.js'
 // let itemStore = new Store('simupper-item-store')
 console.log(myStore)
 export default {
@@ -41,7 +57,10 @@ export default {
     return {
         list: itemStore.fetch(),
         vTypeList: vTypeList,
+        vStyleList: vStyleList,
+        vQualityList: vQualityList,
         vtype: null,
+        vstyle: null,
         title: null,
         isShow: false
     }
@@ -66,6 +85,7 @@ export default {
         this.list.push({
             title: this.title,
             type: this.vtype,
+            style: this.vstyle,
             playtime: playtime
         })
         this.isShow = false
