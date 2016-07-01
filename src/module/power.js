@@ -62,19 +62,16 @@ export let vQualityList = [
     {
         label: '优良',
         id: 0,
-        costPower: 1,
-        finishStatus: 0.5
+        delta: 0.5
     },
     {
         label: '一般',
         id: 1,
-        costPower: 1,
-        finishStatus: 1
+        delta: 1
     },
     {
         label: '粗糙',
         id: 2,
-        costPower: 0.5,
-        finishStatus: 1
+        delta: 0.5
     }
 ]

@@ -1,21 +1,30 @@
 <template>
   <div id="app">
     <div id="left">
-      <my-info></my-info>
-      <days></days>
-      <command></command>
+      <my-info :myinfo="myinfo"></my-info>
+      <days :day="day" v-on:nextday="nextDay"></days>
+      <div class="dt-button" v-on:click="showPublish">
+          <a href="#">make</a>
+      </div>
     </div>
     <div id="right">
-      <list>
+      <list :list="list" v-on:update="saveList">
     </div>
   </div>
+  <publish
+  :isshow="isShowPublish"
+  v-on:hide="hidePublish"
+  v-on:addnewitem="addNewItem"></publish>
 </template>
 
 <script>
+import { dayStore, itemStore, myStore } from './module/store.js'
+
 import Days from './components/days.vue'
 import List from './components/list.vue'
 import MyInfo from './components/myInfo.vue'
-import Command from './components/command.vue'
+import Publish from './components/publish.vue'
+// import Command from './components/command.vue'
 
 // import Store from './store/store.js'
 
@@ -27,16 +36,73 @@ export default {
     Days,
     List,
     MyInfo,
-    Command
+    Publish
+    // Command
   },
   data () {
     return {
-      // day: dayStore.fetch()
+      day: dayStore.fetch(),
+      myinfo: myStore.fetch(),
+      list: itemStore.fetch(),
+      isShowPublish: false
     }
   },
-  events: {
-    'on-publish': function () {
-        this.$broadcast('on-publish')
+  ready: function () {
+    this.myinfo.username = 'test222'
+    this.myinfo.power = 100
+    this.myinfo.follower = 100
+  // attr.follower = 100
+  // attr.publish = itemStore.fetch().length
+  // attr.power = 100
+  },
+  watch: {
+    day: {
+      handler: function (day) {
+        dayStore.save(day)
+      }
+    },
+    myinfo: {
+      handler: function (my) {
+        myStore.save(my)
+      },
+      deep: true
+    },
+    list: {
+      handler: function (list) {
+        itemStore.save(list)
+      },
+      deep: true
+    }
+  },
+  methods: {
+    nextDay: function () {
+      this.day ++
+      this.myinfo.power = 100
+    },
+    showPublish: function () {
+      if (this.myinfo.power === 0) {
+        alert('no power, pls next day')
+        return
+      }
+      this.isShowPublish = true
+    },
+    hidePublish: function () {
+      this.isShowPublish = false
+    },
+    addNewItem: function (vtype, vstyle, vquality, vtitle) {
+      let newItem = {
+        title: vtitle,
+        type: vtype,
+        style: vstyle,
+        quality: vquality
+      }
+      if (this.myinfo.power < 100 * vquality.costPower) {
+        alert('not enough power')
+        return
+      }
+      this.myinfo.power -= 100 * vquality.costPower
+      newItem.finishStatus = 0 + 100 * vquality.finishStatus
+      this.list.push(newItem)
     }
   }
 }
