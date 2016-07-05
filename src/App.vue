@@ -2,19 +2,26 @@
   <div id="app">
     <div id="left">
       <my-info :myinfo="myinfo"></my-info>
-      <days :day="day" v-on:nextday="nextDay"></days>
-      <div class="dt-button" v-on:click="showPublish">
+      <days :day="day" @nextday="nextDay"></days>
+      <div class="dt-button" @click="makeVideo">
           <a href="#">make</a>
       </div>
     </div>
     <div id="right">
-      <list :list="list" v-on:update="saveList">
+      <list 
+      :list="list"
+      @continuemake="continueMake"
+      @publish="publish"
+      @remove="remove">
     </div>
   </div>
-  <publish
+  <div>
+    <publish
   :isshow="isShowPublish"
-  v-on:hide="hidePublish"
-  v-on:addnewitem="addNewItem"></publish>
+  @hide="hidePublish"
+  @addnewitem="addNewItem"></publish>
+  </div>
+  
 </template>
 
 <script>
@@ -79,7 +86,7 @@ export default {
       this.day ++
       this.myinfo.power = 100
     },
-    showPublish: function () {
+    makeVideo: function () {
       if (this.myinfo.power === 0) {
         alert('no power, pls next day')
         return
@@ -94,15 +101,36 @@ export default {
         title: vtitle,
         type: vtype,
         style: vstyle,
-        quality: vquality
+        quality: vquality,
+        playtime: 0,
+        like: 0,
+        commit: 0,
+        finishStatus: 0,
+        online: false
       }
       if (this.myinfo.power < 100 * vquality.costPower) {
         alert('not enough power')
         return
       }
       this.myinfo.power -= 100 * vquality.costPower
-      newItem.finishStatus = 0 + 100 * vquality.finishStatus
+      newItem.finishStatus = newItem.finishStatus + 100 * vquality.finishStatus
       this.list.push(newItem)
+    },
+    continueMake: function (index, item) {
+      if (this.myinfo.power < 100 * item.quality.costPower) {
+        alert('not enough power')
+        return
+      }
+      this.myinfo.power -= 100 * item.quality.costPower
+      item.finishStatus = item.finishStatus + 100 * item.quality.finishStatus
+      this.list.$set(index, item)
+    },
+    publish: function (index, item) {
+      item.online = true
+      this.list.$set(index, item)
+    },
+    remove: function (index, item) {
+      this.list.$remove(item)
     }
   }
 }
@@ -137,7 +165,8 @@ body, html {
   overflow: hidden;
 }
 #left {
-  float: left;
+  position: fixed;
+  height: 100%;
   width: 18%;
   padding: 1%;
   background: #003d51;
@@ -145,6 +174,7 @@ body, html {
 }
 #right {
   float: left;
+  margin-left: 20%;
   width: 78%;
   padding: 1%;
   height: 98%;

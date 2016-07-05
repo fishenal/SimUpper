@@ -1,6 +1,6 @@
 <template>
   <div class="up-list">
-    <div class="up-item" v-for="item in list">
+    <div class="up-item" v-for="(index, item) in list">
       <div>
           <h1>{{item.title}} </h1>
 
@@ -13,12 +13,16 @@
           <span>like: {{item.like}}</span>
           <span>commit: {{item.commit}}</span>
       </div>
-      <div class="dt-button" v-on:click="publish">
+      <div class="dt-button" v-if="item.finishStatus===100&&!item.online" @click="publish(index, item)">
           <a href="#">publish</a>
       </div>
-      <div class="dt-button" v-on:click="continuee">
+      <div class="dt-button" v-if="item.finishStatus!==100&&!item.online" @click="continuee(index, item)">
           <a href="#">continue make</a>
       </div>
+      <div class="dt-button" @click="remove(index, item)">
+          <a href="#">remove</a>
+      </div>
+      <div v-if="item.online">online!</div>
     </div>
   </div>
 </template>
@@ -32,8 +36,15 @@ export default {
     }
   },
   methods: {
-    continuee: function () {},
-    publish: function () {}
+    continuee: function (index, item) {
+      this.$emit('continuemake', index, item)
+    },
+    publish: function (index, item) {
+      this.$emit('publish', index, item)
+    },
+    remove: function (index, item) {
+      this.$emit('remove', index, item)
+    }
   }
   // watch: {
   //     list: {
