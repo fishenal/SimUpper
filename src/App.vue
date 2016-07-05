@@ -25,6 +25,8 @@
 </template>
 
 <script>
+import _ from 'lodash'
+import { vTypeList } from './module/data.js'
 import { dayStore, itemStore, myStore } from './module/store.js'
 
 import Days from './components/days.vue'
@@ -58,9 +60,12 @@ export default {
     this.myinfo.username = 'test222'
     this.myinfo.power = 100
     this.myinfo.follower = 100
-  // attr.follower = 100
-  // attr.publish = itemStore.fetch().length
-  // attr.power = 100
+    this.myinfo.publish = this.list.length
+    let abilities = [];
+    _.forEach(vTypeList, function(item, key) {
+      abilities.push(_.random(50, 100))
+    })
+    this.myinfo.abilities = abilities
   },
   watch: {
     day: {
@@ -77,6 +82,7 @@ export default {
     list: {
       handler: function (list) {
         itemStore.save(list)
+        this.myinfo.publish = this.list.length
       },
       deep: true
     }
@@ -102,6 +108,7 @@ export default {
         type: vtype,
         style: vstyle,
         quality: vquality,
+        videoInnerQuality: 0,
         playtime: 0,
         like: 0,
         commit: 0,
@@ -127,6 +134,55 @@ export default {
     },
     publish: function (index, item) {
       item.online = true
+
+      // 计算视频评分
+      let videoInnerQuality = 100
+
+      // calculate video quality
+      // 相应种类视频技巧系数
+      let techRatio = this.myinfo.abilities[item.type.id] / 100
+      videoInnerQuality *= techRatio
+      // 计算视频质量系数
+      let vQualityRatio
+      if (item.quality.id === 0) { //优良
+        vQualityRatio = _.random(1, 2, true)
+      }
+      else if (item.quality.id === 1) { //中等
+        vQualityRatio = _.random(0.8, 1.8, true)
+      }
+      else if (item.quality.id === 2) { // 粗糙
+        vQualityRatio = _.random(0.4, 1, true)
+      }
+      videoInnerQuality *= vQualityRatio
+
+      // 质量随机系数
+      let randomRatio = _.random(0.5, 1.5, true)
+      videoInnerQuality *= randomRatio
+
+      console.log('技术，质量，随机 系数', techRatio, vQualityRatio, randomRatio)
+      console.log('视频质量', videoInnerQuality)
+      item.videoInnerQuality = videoInnerQuality
+
+      // 计算播放量
+      let follower = this.myinfo.follower
+      let publishNum = this.list.length
+      item.playtime = (follower + follower * _.random(0.1, 0.9)
+      + publishNum * _.random(2, 15))
+      * item.videoInnerQuality / 100
+      * _.random(0.8, 3, true)
+
+      // 计算like
+      let likeQuality
+      if (item.videoInnerQuality > 100) {
+        likeQuality = 1
+      }
+      else {
+        likeQuality = item.videoInnerQuality / 100
+      }
+      item.like = 
+      item.playtime * likeQuality * _.random(0.1, 0.5, true)
+
+      //
       this.list.$set(index, item)
     },
     remove: function (index, item) {
