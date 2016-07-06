@@ -26,6 +26,7 @@
 
 <script>
 import _ from 'lodash'
+import { gRan } from './module/gaussian.js'
 import { vTypeList } from './module/data.js'
 import { dayStore, itemStore, myStore } from './module/store.js'
 
@@ -33,6 +34,8 @@ import Days from './components/days.vue'
 import List from './components/list.vue'
 import MyInfo from './components/myInfo.vue'
 import Publish from './components/publish.vue'
+
+console.log(gRan)
 // import Command from './components/command.vue'
 
 // import Store from './store/store.js'
@@ -66,6 +69,7 @@ export default {
       abilities.push(_.random(50, 100))
     })
     this.myinfo.abilities = abilities
+    console.log(gRan(100, 15))
   },
   watch: {
     day: {
@@ -91,6 +95,13 @@ export default {
     nextDay: function () {
       this.day ++
       this.myinfo.power = 100
+      _.forEach(this.list, function(item) {
+        if (item.online) {
+          item.playtime += item.day / 10 * item.playtime
+          item.like += (item.day / 10 * item.playtime) * (item.day / 10 * item.videoInnerQuality)
+          console.log(item.playtime, item.like)
+        }
+      })
     },
     makeVideo: function () {
       if (this.myinfo.power === 0) {
@@ -113,7 +124,8 @@ export default {
         like: 0,
         commit: 0,
         finishStatus: 0,
-        online: false
+        online: false,
+        day: 0
       }
       if (this.myinfo.power < 100 * vquality.costPower) {
         alert('not enough power')
@@ -134,7 +146,7 @@ export default {
     },
     publish: function (index, item) {
       item.online = true
-
+      item.day = 1
       // 计算视频评分
       let videoInnerQuality = 100
 
@@ -161,16 +173,18 @@ export default {
 
       console.log('技术，质量，随机 系数', techRatio, vQualityRatio, randomRatio)
       console.log('视频质量', videoInnerQuality)
-      item.videoInnerQuality = videoInnerQuality
+      item.videoInnerQuality = videoInnerQuality.toFixed(1)
 
       // 计算播放量
       let follower = this.myinfo.follower
       let publishNum = this.list.length
-      item.playtime = (follower + follower * _.random(0.1, 0.9)
-      + publishNum * _.random(2, 15))
+      let playtime =
+      follower + follower * _.random(0.1, 0.9)
+      // + publishNum * _.random(2, 15))
       * item.videoInnerQuality / 100
       * _.random(0.8, 3, true)
-
+      playtime = parseInt(playtime)
+      item.playtime = playtime
       // 计算like
       let likeQuality
       if (item.videoInnerQuality > 100) {
@@ -180,7 +194,7 @@ export default {
         likeQuality = item.videoInnerQuality / 100
       }
       item.like = 
-      item.playtime * likeQuality * _.random(0.1, 0.5, true)
+      parseInt(item.playtime * likeQuality * _.random(0.1, 0.5, true))
 
       //
       this.list.$set(index, item)

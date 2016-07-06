@@ -10,6 +10,7 @@
           <span>质量： {{item.quality.label}}</span>
           <span>完成度：{{item.finishStatus }} %</span>
           <span>视频评分：{{item.videoInnerQuality}}</span>
+          <span>视频持续天数：{{item.day}}</span>
           <span>play times: {{item.playtime}}</span>
           <span>like: {{item.like}}</span>
           <span>commit: {{item.commit}}</span>
