@@ -26,7 +26,7 @@
 
 <script>
 import _ from 'lodash'
-import { gRan } from './module/gaussian.js'
+import Gau from 'gaussian'
 import { vTypeList } from './module/data.js'
 import { dayStore, itemStore, myStore } from './module/store.js'
 
@@ -35,7 +35,12 @@ import List from './components/list.vue'
 import MyInfo from './components/myInfo.vue'
 import Publish from './components/publish.vue'
 
-console.log(gRan)
+
+var distribution = Gau(100, 2);
+// Take a random sample using inverse transform sampling method. 
+var sample = distribution.ppf(Math.random());
+
+// console.log(gRan)
 // import Command from './components/command.vue'
 
 // import Store from './store/store.js'
@@ -52,24 +57,36 @@ export default {
     // Command
   },
   data () {
+    let myinfo = {}
+    if (myStore.fetch() !== '{}') {
+      myinfo = myStore.fetch()
+    }
+    else {
+      myinfo.username = 'test222'
+      myinfo.power = 100
+      myinfo.follower = 100
+      myinfo.publish = this.list.length
+      let abilities = [];
+      // 能力高斯随机
+      let abilityDis = Gau(50, 0.05)
+      _.forEach(vTypeList, function(item, key) {
+        abilities.push({
+          label: item.label,
+          abi: abilityDis.ppf(Math.random())
+        })
+      })
+      myinfo.abilities = abilities
+    }
+    
     return {
       day: dayStore.fetch(),
-      myinfo: myStore.fetch(),
+      myinfo: myinfo,
       list: itemStore.fetch(),
       isShowPublish: false
     }
   },
   ready: function () {
-    this.myinfo.username = 'test222'
-    this.myinfo.power = 100
-    this.myinfo.follower = 100
-    this.myinfo.publish = this.list.length
-    let abilities = [];
-    _.forEach(vTypeList, function(item, key) {
-      abilities.push(_.random(50, 100))
-    })
-    this.myinfo.abilities = abilities
-    console.log(gRan(100, 15))
+    
   },
   watch: {
     day: {
@@ -97,11 +114,20 @@ export default {
       this.myinfo.power = 100
       _.forEach(this.list, function(item) {
         if (item.online) {
-          item.playtime += item.day / 10 * item.playtime
-          item.like += (item.day / 10 * item.playtime) * (item.day / 10 * item.videoInnerQuality)
-          console.log(item.playtime, item.like)
+          item.day ++
+          let deltptime = parseInt(item.rePlaytime / item.day)
+          let dellike = parseInt(item.reLike / item.day)
+          item.playtime +=  deltptime
+          item.like += dellike
+
+          // 粉丝增长
+          let userFollDis = Gau(20, 0.004)
+          this.myinfo.follower += deltptime * userFollDis.ppf(Math.random()) / 100
+          this.myinfo.follower += dellike / 2
+
+          console.log(deltptime, dellike)
         }
-      })
+      }.bind(this))
     },
     makeVideo: function () {
       if (this.myinfo.power === 0) {
@@ -133,6 +159,13 @@ export default {
       }
       this.myinfo.power -= 100 * vquality.costPower
       newItem.finishStatus = newItem.finishStatus + 100 * vquality.finishStatus
+
+      // 技能增强
+      _.forEach(this.myinfo.abilities, function(item) {
+        if (item.label === vtype.label) {
+          item.abi += item.abi / 2
+        }
+      })
       this.list.push(newItem)
     },
     continueMake: function (index, item) {
@@ -142,6 +175,12 @@ export default {
       }
       this.myinfo.power -= 100 * item.quality.costPower
       item.finishStatus = item.finishStatus + 100 * item.quality.finishStatus
+      // 技能增强
+      _.forEach(this.myinfo.abilities, function(abi) {
+        if (abi.label === item.type.label) {
+          abi.abi += abi.abi / 2
+        }
+      })
       this.list.$set(index, item)
     },
     publish: function (index, item) {
@@ -152,23 +191,30 @@ export default {
 
       // calculate video quality
       // 相应种类视频技巧系数
-      let techRatio = this.myinfo.abilities[item.type.id] / 100
+      let techRatio = this.myinfo.abilities[item.type.id].abi / 100
       videoInnerQuality *= techRatio
       // 计算视频质量系数
       let vQualityRatio
+      // 质量高斯随机
+      let highQualityDis = Gau(120, 0.4)
+      let midQualityDis = Gau(100, 0.3)
+      let lowQualityDis = Gau(50, 0.02)
+      let randomQualityDis = Gau(100, 0.1)
+      // Take a random sample using inverse transform sampling method. 
       if (item.quality.id === 0) { //优良
-        vQualityRatio = _.random(1, 2, true)
+        vQualityRatio = highQualityDis.ppf(Math.random())
       }
       else if (item.quality.id === 1) { //中等
-        vQualityRatio = _.random(0.8, 1.8, true)
+        vQualityRatio = midQualityDis.ppf(Math.random())
       }
       else if (item.quality.id === 2) { // 粗糙
-        vQualityRatio = _.random(0.4, 1, true)
+        vQualityRatio = lowQualityDis.ppf(Math.random())
       }
-      videoInnerQuality *= vQualityRatio
+      videoInnerQuality *= vQualityRatio / 100
 
       // 质量随机系数
-      let randomRatio = _.random(0.5, 1.5, true)
+      
+      let randomRatio = randomQualityDis.ppf(Math.random()) / 100
       videoInnerQuality *= randomRatio
 
       console.log('技术，质量，随机 系数', techRatio, vQualityRatio, randomRatio)
@@ -178,23 +224,36 @@ export default {
       // 计算播放量
       let follower = this.myinfo.follower
       let publishNum = this.list.length
+      // 播放量高斯随机
+      let follDis = Gau(50, 0.02)
+      let ptimeRanDis = Gau(100, 0.1)
       let playtime =
-      follower + follower * _.random(0.1, 0.9)
+      follower + (follower * follDis.ppf(Math.random()) / 100)
       // + publishNum * _.random(2, 15))
       * item.videoInnerQuality / 100
-      * _.random(0.8, 3, true)
+      * ptimeRanDis.ppf(Math.random()) / 100
       playtime = parseInt(playtime)
       item.playtime = playtime
+      item.rePlaytime = playtime
+
+      // 粉丝增长
+      let userFollDis = Gau(20, 0.004)
+      this.myinfo.follower += playtime * userFollDis.ppf(Math.random()) / 100
       // 计算like
       let likeQuality
+      // like高斯随机
+      let likeDis = Gau(20, 0.005)
       if (item.videoInnerQuality > 100) {
         likeQuality = 1
       }
       else {
         likeQuality = item.videoInnerQuality / 100
       }
-      item.like = 
-      parseInt(item.playtime * likeQuality * _.random(0.1, 0.5, true))
+      let like = parseInt(item.playtime * likeQuality * likeDis.ppf(Math.random()) / 100)
+      item.like = like
+      item.reLike = like
+      // 粉丝增长
+      this.myinfo.follower += like / 2
 
       //
       this.list.$set(index, item)

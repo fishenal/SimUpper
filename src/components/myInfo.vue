@@ -9,6 +9,12 @@
           <li>follower: {{myinfo.follower}}</li>
           <li>publish: {{myinfo.publish}}</li>
           <li>power: {{myinfo.power}}</li>
+        </ul>
+        <h2>技能</h2>
+        <ul class="dt-list-3 dt-light">
+          <li v-for="item in myinfo.abilities">
+            {{ item.label }} : {{ item.abi }}
+          </li>
         </ul>   
     </div>  
   </div>
