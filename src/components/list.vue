@@ -9,7 +9,7 @@
           <span>一个{{item.style.label}}的{{item.type.label}}视频</span>
           <span>质量： {{item.quality.label}}</span>
           <span>完成度：{{item.finishStatus }} %</span>
-          <span>视频评分：{{item.videoInnerQuality}}</span>
+          <span>视频评分：{{item.score}}</span>
           <span>视频持续天数：{{item.day}}</span>
           <span>play times: {{item.playtime}}</span>
           <span>like: {{item.like}}</span>
@@ -17,7 +17,7 @@
 
           <ul>
             <li v-for="cont in item.commits" track-by="$index">
-              {{ cont }}
+              {{ cont.cont }}
             </li>
           </ul>
       </div>

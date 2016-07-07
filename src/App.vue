@@ -59,6 +59,7 @@ export default {
         })
       })
       myinfo.abilities = abilities
+      myStore.save(myinfo)
     }
     else {
       myinfo = myStore.fetch()
@@ -90,6 +91,9 @@ export default {
       },
       deep: true
     }
+  },
+  ready: function () {
+
   },
   methods: {
 
@@ -199,7 +203,29 @@ export default {
     enhanceAbi: function (item) {
       _.forEach(this.myinfo.abilities, function(abi) {
         if (abi.label === item.type.label) {
-          abi.abi += abi.abi / 2
+        switch (item.score) {
+          case 'a++':
+            abi.abi += abi.abi * 0.03
+            break;
+          case 'a+':
+            abi.abi += abi.abi * 0.02
+            break;
+          case 'a':
+            abi.abi += abi.abi * 0.01
+            break;
+          case 'b':
+            break;
+          case 'c':
+            abi.abi -= abi.abi * 0.01
+            break;
+          case 'c-':
+            abi.abi -= abi.abi * 0.02
+            break;
+          case 'c--':
+            abi.abi -= abi.abi * 0.03
+            break;
+        }
+          
         }
       })
     },
@@ -237,7 +263,7 @@ export default {
     calInnerQual: function (item) {
         // 计算视频评分
         let videoInnerQuality = 100
-
+        let score
         // 相应种类视频技巧系数
         let techRatio = this.myinfo.abilities[item.type.id].abi / 100
         videoInnerQuality *= techRatio
@@ -248,15 +274,14 @@ export default {
         let midQualityDis = Gau(100, 0.3)
         let lowQualityDis = Gau(50, 0.02)
         let randomQualityDis = Gau(100, 0.1)
-        // Take a random sample using inverse transform sampling method. 
         if (item.quality.id === 0) { //优良
-          vQualityRatio = highQualityDis.ppf(Math.random())
+          vQualityRatio = highQualityDis.ppf(0.5)
         }
         else if (item.quality.id === 1) { //中等
-          vQualityRatio = midQualityDis.ppf(Math.random())
+          vQualityRatio = midQualityDis.ppf(0.5)
         }
         else if (item.quality.id === 2) { // 粗糙
-          vQualityRatio = lowQualityDis.ppf(Math.random())
+          vQualityRatio = lowQualityDis.ppf(0.5)
         }
         videoInnerQuality *= vQualityRatio / 100
 
@@ -264,10 +289,29 @@ export default {
         
         let randomRatio = randomQualityDis.ppf(Math.random()) / 100
         videoInnerQuality *= randomRatio
-
-        console.log('技术，质量，随机 系数', techRatio, vQualityRatio, randomRatio)
+        if (videoInnerQuality < 30) {
+          score = 'c--'
+        }
+        else if (videoInnerQuality < 60) {
+          score = 'c-'
+        }
+        else if (videoInnerQuality < 100) {
+          score = 'c'
+        }
+        else if (videoInnerQuality > 200) {
+          score = 'a++'
+        }
+        else if (videoInnerQuality > 160) {
+          score = 'a+'
+        }
+        else if (videoInnerQuality > 130) {
+          score = 'a'
+        }
+        else {
+          score = 'b'
+        }
         console.log('视频质量', videoInnerQuality)
-        item.videoInnerQuality = videoInnerQuality.toFixed(1)
+        item.score = score
     },
 
 
@@ -329,18 +373,84 @@ export default {
     */
     calCommit: function (item) {
       let commits = []
-      for (let i = 0; i < item.like / 100; i ++) {
-        let seed = Math.random()
-        if (seed < 0.01) {
-          commits.push('good')
-        }
-        else if (seed < 0.02) {
-          commits.push('common')
-        }
+      let commitsLength
+      let badLength
+      let goodLength
+      let commonLength
+      if (item.playtime < 1000) {
+        commitsLength  = item.playtime * _.random(0.01, 0.02) / 50
       }
-      
-      commits.push('rubish')
-      
+      else if (item.playtime > 10000){
+        commitsLength  = item.playtime * _.random(0.05, 0.1) / 50
+      }
+      else {
+        commitsLength  = item.playtime * _.random(0.02, 0.03) / 50
+      }
+      // 如果超过1000 取前三位
+      // if (commitsLength >= 1000) {
+      //   commitsLength = + commitsLength.toString.substring(0, 3)
+      // }
+
+      let badNum = 0
+      switch (item.score) {
+        case 'a++':
+          badLength = commitsLength * 0.05
+          goodLength = commitsLength * 0.8
+          commonLength = commitsLength - goodLength - badLength
+          break;
+        case 'a+':
+          badLength = commitsLength * 0.1
+          goodLength = commitsLength * 0.7
+          commonLength = commitsLength - goodLength - badLength
+          break;
+        case 'a':
+          badLength = commitsLength * 0.2
+          goodLength = commitsLength * 0.6
+          commonLength = commitsLength - goodLength - badLength
+          break;
+        case 'b':
+          badLength = commitsLength * 0.3
+          goodLength = commitsLength * 0.3
+          commonLength = commitsLength - goodLength - badLength
+          break;
+        case 'c':
+          badLength = commitsLength * 0.3
+          goodLength = commitsLength * 0.2
+          commonLength = commitsLength - goodLength - badLength
+          break;
+        case 'c-':
+          badLength = commitsLength * 0.5
+          goodLength = commitsLength * 0.1
+          commonLength = commitsLength - goodLength - badLength
+          break;
+        case 'c--':
+          badLength = commitsLength * 0.8
+          goodLength = commitsLength * 0.1
+          commonLength = commitsLength - goodLength - badLength
+          break;
+      }
+      for (let i = 0; i < badLength; i ++) {
+          commits.push({
+            type: 'bad',
+            cont: 'rabish'
+          })
+      }
+      for (let i = 0; i < goodLength; i ++) {
+          commits.push({
+            type: 'good',
+            cont: 'very good!'
+          })
+      }
+      for (let i = 0; i < commonLength; i ++) {
+          commits.push({
+            type: 'common',
+            cont: 'just soso'
+          })
+      }
+      commits = commits.sort(function () {
+        return Math.random() > .5 ? -1 : 1;   
+      });
+
       item.commits = commits
     },
 
