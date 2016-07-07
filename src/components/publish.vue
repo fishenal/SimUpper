@@ -48,7 +48,26 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import { vTypeList, vStyleList, vQualityList } from '../module/data.js'
+let itemModel = {
+  title: null,
+  type: null,
+  style: null,
+  quality: null,
+  videoInnerQuality: 0,
+  playtime: 0,
+  like: 0,
+  commits: [],
+  finishStatus: 0,
+  online: false,
+  day: 0
+}
+class ItemModel {
+  constructor (item) {
+    this.model = item
+  }
+}
 
 export default {
   props: ['isshow', 'typelist', 'stylelist', 'qualitylist'],
@@ -64,34 +83,17 @@ export default {
     }
   },
   watch: {
-    // list: {
-    //   handler (newList) {
-    //     itemStore.save(newList)
-    //     this.$dispatch('on-publish')
-    //   },
-    //   deep: true
-    // }
   },
   methods: {
     submit: function () {
-        this.$emit('addnewitem', this.vtype, this.vstyle, this.vquality, this.vtitle)
+        let newItem = _.assign(itemModel, {
+          type: this.vtype,
+          style: this.vstyle,
+          quality: this.vquality,
+          title: this.vtitle
+        })
+        this.$emit('make', newItem)
         this.$emit('hide')
-        // let playtime = 0;
-        // let myAttr = myStore.fetch();
-        // playtime += myAttr.follower + myAttr.follower * 0.6
-        // playtime += myAttr.publish + myAttr.publish * 7
-
-        // myAttr.power -= this.vQuality.costPower
-        // let finishStatus = this.vQuality.finishStatus
-
-        // this.list.push({
-        //     title: this.title,
-        //     type: this.vtype,
-        //     style: this.vstyle,
-        //     playtime: playtime,
-        //     finishStatus: finishStatus
-        // })
-        // this.isshow = false
     },
     hide: function () {
         this.$emit('hide')

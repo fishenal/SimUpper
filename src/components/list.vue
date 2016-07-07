@@ -13,7 +13,13 @@
           <span>视频持续天数：{{item.day}}</span>
           <span>play times: {{item.playtime}}</span>
           <span>like: {{item.like}}</span>
-          <span>commit: {{item.commit}}</span>
+          <span>commits: {{item.commits.length}}</span>
+
+          <ul>
+            <li v-for="cont in item.commits" track-by="$index">
+              {{ cont }}
+            </li>
+          </ul>
       </div>
       <div class="dt-button" v-if="item.finishStatus===100&&!item.online" @click="publish(index, item)">
           <a href="#">publish</a>

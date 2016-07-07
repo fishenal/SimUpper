@@ -3,7 +3,7 @@
     <div id="left">
       <my-info :myinfo="myinfo"></my-info>
       <days :day="day" @nextday="nextDay"></days>
-      <div class="dt-button" @click="makeVideo">
+      <div class="dt-button" @click="showMakeVideoPop">
           <a href="#">make</a>
       </div>
     </div>
@@ -18,8 +18,8 @@
   <div>
     <publish
   :isshow="isShowPublish"
-  @hide="hidePublish"
-  @addnewitem="addNewItem"></publish>
+  @hide="hideMakeVideoPop"
+  @make="make"></publish>
   </div>
   
 </template>
@@ -35,37 +35,20 @@ import List from './components/list.vue'
 import MyInfo from './components/myInfo.vue'
 import Publish from './components/publish.vue'
 
-
-var distribution = Gau(100, 2);
-// Take a random sample using inverse transform sampling method. 
-var sample = distribution.ppf(Math.random());
-
-// console.log(gRan)
-// import Command from './components/command.vue'
-
-// import Store from './store/store.js'
-
-// let dayStore = new Store('simupper-day-store');
-// let dayStore = new Store('simupper-day-store');
-
 export default {
   components: {
     Days,
     List,
     MyInfo,
     Publish
-    // Command
   },
   data () {
     let myinfo = {}
-    if (myStore.fetch() !== '{}') {
-      myinfo = myStore.fetch()
-    }
-    else {
+    if (myStore.isEmpty()) {
       myinfo.username = 'test222'
       myinfo.power = 100
       myinfo.follower = 100
-      myinfo.publish = this.list.length
+      myinfo.publish = itemStore.fetch().length
       let abilities = [];
       // 能力高斯随机
       let abilityDis = Gau(50, 0.05)
@@ -77,6 +60,9 @@ export default {
       })
       myinfo.abilities = abilities
     }
+    else {
+      myinfo = myStore.fetch()
+    }
     
     return {
       day: dayStore.fetch(),
@@ -84,9 +70,6 @@ export default {
       list: itemStore.fetch(),
       isShowPublish: false
     }
-  },
-  ready: function () {
-    
   },
   watch: {
     day: {
@@ -109,118 +92,193 @@ export default {
     }
   },
   methods: {
+
+
+    /*
+    * 事件绑定：下一天
+    * @model Day
+    */
     nextDay: function () {
       this.day ++
       this.myinfo.power = 100
-      _.forEach(this.list, function(item) {
-        if (item.online) {
-          item.day ++
-          let deltptime = parseInt(item.rePlaytime / item.day)
-          let dellike = parseInt(item.reLike / item.day)
-          item.playtime +=  deltptime
-          item.like += dellike
-
-          // 粉丝增长
-          let userFollDis = Gau(20, 0.004)
-          this.myinfo.follower += deltptime * userFollDis.ppf(Math.random()) / 100
-          this.myinfo.follower += dellike / 2
-
-          console.log(deltptime, dellike)
-        }
-      }.bind(this))
+      this.loopListPerDay()
     },
-    makeVideo: function () {
-      if (this.myinfo.power === 0) {
-        alert('no power, pls next day')
-        return
-      }
+
+
+    /*
+    * 事件绑定：显示制作弹窗
+    * @model this
+    */
+    showMakeVideoPop: function () {
+      // if (this.myinfo.power === 0) {
+      //   alert('no power, pls next day')
+      //   return
+      // }
       this.isShowPublish = true
     },
-    hidePublish: function () {
+
+
+    /*
+    * 事件绑定：隐藏制作弹窗
+    * @model Publish
+    */
+    hideMakeVideoPop: function () {
       this.isShowPublish = false
     },
-    addNewItem: function (vtype, vstyle, vquality, vtitle) {
-      let newItem = {
-        title: vtitle,
-        type: vtype,
-        style: vstyle,
-        quality: vquality,
-        videoInnerQuality: 0,
-        playtime: 0,
-        like: 0,
-        commit: 0,
-        finishStatus: 0,
-        online: false,
-        day: 0
-      }
-      if (this.myinfo.power < 100 * vquality.costPower) {
+
+
+    /*
+    * 事件绑定：制作新item提交至list
+    * @model Publish
+    */
+    make: function (newItem) {
+      if (this.myinfo.power < 100 * newItem.quality.costPower) {
         alert('not enough power')
         return
       }
-      this.myinfo.power -= 100 * vquality.costPower
-      newItem.finishStatus = newItem.finishStatus + 100 * vquality.finishStatus
-
-      // 技能增强
-      _.forEach(this.myinfo.abilities, function(item) {
-        if (item.label === vtype.label) {
-          item.abi += item.abi / 2
-        }
-      })
+      this.calInnerQual(newItem)
+      this.costPower(newItem)
+      this.updateFinishStatus(newItem)
+      this.enhanceAbi(newItem)
       this.list.push(newItem)
     },
+
+
+    /*
+    * 事件绑定：在list里继续制作item
+    * @model List
+    */
     continueMake: function (index, item) {
       if (this.myinfo.power < 100 * item.quality.costPower) {
         alert('not enough power')
         return
       }
-      this.myinfo.power -= 100 * item.quality.costPower
-      item.finishStatus = item.finishStatus + 100 * item.quality.finishStatus
-      // 技能增强
+      this.costPower(item)
+      this.updateFinishStatus(item)
+      this.enhanceAbi(item)
+      this.list.$set(index, item)
+    },
+
+
+    /*
+    * 事件绑定：发布某项item
+    * @model List
+    */
+    publish: function (index, item) {
+      item.online = true
+      item.day = 1
+
+      this.calPlaytime(item)
+      
+      this.calLike(item)
+
+      this.calCommit(item)
+
+      this.calFollower(item)
+
+      this.list.$set(index, item)
+    },
+
+
+    /*
+    * 事件绑定：删除某项item
+    * @model List
+    */
+    remove: function (index, item) {
+      this.list.$remove(item)
+    },
+
+
+    /*
+    * 技能强化
+    * @depend this.myinfo.abilities
+    * @depend item.type.label
+    * @param item
+    * @output this.myinfo.abilities
+    */
+    enhanceAbi: function (item) {
       _.forEach(this.myinfo.abilities, function(abi) {
         if (abi.label === item.type.label) {
           abi.abi += abi.abi / 2
         }
       })
-      this.list.$set(index, item)
     },
-    publish: function (index, item) {
-      item.online = true
-      item.day = 1
-      // 计算视频评分
-      let videoInnerQuality = 100
 
-      // calculate video quality
-      // 相应种类视频技巧系数
-      let techRatio = this.myinfo.abilities[item.type.id].abi / 100
-      videoInnerQuality *= techRatio
-      // 计算视频质量系数
-      let vQualityRatio
-      // 质量高斯随机
-      let highQualityDis = Gau(120, 0.4)
-      let midQualityDis = Gau(100, 0.3)
-      let lowQualityDis = Gau(50, 0.02)
-      let randomQualityDis = Gau(100, 0.1)
-      // Take a random sample using inverse transform sampling method. 
-      if (item.quality.id === 0) { //优良
-        vQualityRatio = highQualityDis.ppf(Math.random())
-      }
-      else if (item.quality.id === 1) { //中等
-        vQualityRatio = midQualityDis.ppf(Math.random())
-      }
-      else if (item.quality.id === 2) { // 粗糙
-        vQualityRatio = lowQualityDis.ppf(Math.random())
-      }
-      videoInnerQuality *= vQualityRatio / 100
 
-      // 质量随机系数
-      
-      let randomRatio = randomQualityDis.ppf(Math.random()) / 100
-      videoInnerQuality *= randomRatio
+    /*
+    * 能量消耗
+    * @depend item.quality.costPower
+    * @param item
+    * @output myinfo.power
+    */
+    costPower: function (item) {
+      this.myinfo.power -= 100 * item.quality.costPower
+    },
 
-      console.log('技术，质量，随机 系数', techRatio, vQualityRatio, randomRatio)
-      console.log('视频质量', videoInnerQuality)
-      item.videoInnerQuality = videoInnerQuality.toFixed(1)
+    /*
+    * 更新完成状态
+    * @depend item.finishStatus
+    * @depend item.quality.finishStatus
+    * @param item
+    * @output finishStatus
+    */
+    updateFinishStatus: function (item) {
+      item.finishStatus = item.finishStatus + 100 * item.quality.finishStatus
+    },
 
+
+    /*
+    * 计算内部质量
+    * @depend item.type.id
+    * @depend item.quality.id
+    * @param item
+    * @output videoInnerQuality
+    */
+    calInnerQual: function (item) {
+        // 计算视频评分
+        let videoInnerQuality = 100
+
+        // 相应种类视频技巧系数
+        let techRatio = this.myinfo.abilities[item.type.id].abi / 100
+        videoInnerQuality *= techRatio
+        // 计算视频质量系数
+        let vQualityRatio
+        // 质量高斯随机
+        let highQualityDis = Gau(120, 0.4)
+        let midQualityDis = Gau(100, 0.3)
+        let lowQualityDis = Gau(50, 0.02)
+        let randomQualityDis = Gau(100, 0.1)
+        // Take a random sample using inverse transform sampling method. 
+        if (item.quality.id === 0) { //优良
+          vQualityRatio = highQualityDis.ppf(Math.random())
+        }
+        else if (item.quality.id === 1) { //中等
+          vQualityRatio = midQualityDis.ppf(Math.random())
+        }
+        else if (item.quality.id === 2) { // 粗糙
+          vQualityRatio = lowQualityDis.ppf(Math.random())
+        }
+        videoInnerQuality *= vQualityRatio / 100
+
+        // 质量随机系数
+        
+        let randomRatio = randomQualityDis.ppf(Math.random()) / 100
+        videoInnerQuality *= randomRatio
+
+        console.log('技术，质量，随机 系数', techRatio, vQualityRatio, randomRatio)
+        console.log('视频质量', videoInnerQuality)
+        item.videoInnerQuality = videoInnerQuality.toFixed(1)
+    },
+
+
+    /*
+    * 计算播放量
+    * @depend item.videoInnerQuality
+    * @param item
+    * @output playtime
+    * @output rePlaytime
+    */
+    calPlaytime: function (item) {
       // 计算播放量
       let follower = this.myinfo.follower
       let publishNum = this.list.length
@@ -229,16 +287,23 @@ export default {
       let ptimeRanDis = Gau(100, 0.1)
       let playtime =
       follower + (follower * follDis.ppf(Math.random()) / 100)
-      // + publishNum * _.random(2, 15))
       * item.videoInnerQuality / 100
       * ptimeRanDis.ppf(Math.random()) / 100
       playtime = parseInt(playtime)
       item.playtime = playtime
       item.rePlaytime = playtime
+    },
 
-      // 粉丝增长
-      let userFollDis = Gau(20, 0.004)
-      this.myinfo.follower += playtime * userFollDis.ppf(Math.random()) / 100
+
+    /*
+    * 计算like
+    * @depend item.videoInnerQuality
+    * @depend item.playtime
+    * @param item
+    * @output like
+    * @output reLike
+    */
+    calLike: function (item) {
       // 计算like
       let likeQuality
       // like高斯随机
@@ -252,14 +317,71 @@ export default {
       let like = parseInt(item.playtime * likeQuality * likeDis.ppf(Math.random()) / 100)
       item.like = like
       item.reLike = like
-      // 粉丝增长
-      this.myinfo.follower += like / 2
-
-      //
-      this.list.$set(index, item)
     },
-    remove: function (index, item) {
-      this.list.$remove(item)
+
+
+    /*
+    * 计算评论
+    * @depend item.like
+    * @depend item.playtime
+    * @param item
+    * @output item.commits
+    */
+    calCommit: function (item) {
+      let commits = []
+      for (let i = 0; i < item.like / 100; i ++) {
+        let seed = Math.random()
+        if (seed < 0.01) {
+          commits.push('good')
+        }
+        else if (seed < 0.02) {
+          commits.push('common')
+        }
+      }
+      
+      commits.push('rubish')
+      
+      item.commits = commits
+    },
+
+
+    /*
+    * 根据item变化计算粉丝增长
+    * @depend item.like
+    * @depend item.playtime
+    * @param item
+    * @output this.myinfo.follower
+    */
+    calFollower: function (item) {
+      this.myinfo.follower += item.like / 2
+      let userFollDis = Gau(20, 0.004)
+      this.myinfo.follower += item.playtime * userFollDis.ppf(Math.random()) / 100
+    },
+
+
+    /*
+    * 每日遍历状态改变
+    * @param null
+    * @return null
+    */
+    loopListPerDay: function () {
+      _.forEach(this.list, function(item) {
+        if (item.online) {
+          item.day ++
+          let deltptime = parseInt(item.rePlaytime / item.day) // + 随机
+          let dellike = parseInt(item.reLike / item.day)
+          item.playtime +=  deltptime
+          item.like += dellike
+
+          // 粉丝增长
+          let userFollDis = Gau(20, 0.05)
+          this.myinfo.follower += deltptime * userFollDis.ppf(Math.random()) / 100
+          this.myinfo.follower += dellike / 2
+
+          // 评论
+          console.log(deltptime, dellike)
+        }
+      }.bind(this))
     }
   }
 }

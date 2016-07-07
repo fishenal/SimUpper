@@ -7,6 +7,11 @@ class Store {
         let empty = this.isObj ? '{}' : '[]'
         return JSON.parse(window.localStorage.getItem(this.key) || empty)
     }
+    isEmpty () {
+        let v = localStorage.getItem(this.key)
+        console.log(v === null || v === '{}' || v === '[]')
+        return v === null || v === '{}' || v === '[]'
+    }
     save (items) {
         window.localStorage.setItem(this.key, JSON.stringify(items))
     }
