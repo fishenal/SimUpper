@@ -1,9 +1,8 @@
 <template>
   <div id="app">
     <div id="left">
-      <my-info :myinfo="myinfo"></my-info>
-      <days :day="day" @nextday="nextDay"></days>
-      <div class="dt-button" @click="showMakeVideoPop">
+      <my></my>
+      <div class="dt-button" @click="showMakePop">
           <a href="#">make</a>
       </div>
     </div>
@@ -15,11 +14,8 @@
       @remove="remove">
     </div>
   </div>
-  <div>
-    <publish
-  :isshow="isShowPublish"
-  @hide="hideMakeVideoPop"
-  @make="make"></publish>
+  <div v-if="isShowMakePop">
+    <make-pop></make-pop>
   </div>
   
 </template>
@@ -30,17 +26,20 @@ import Gau from 'gaussian'
 import { vTypeList } from './module/data.js'
 import { dayStore, itemStore, myStore } from './module/store.js'
 
-import Days from './components/days.vue'
+//import Days from './components/days.vue'
 import List from './components/list.vue'
-import MyInfo from './components/myInfo.vue'
-import Publish from './components/publish.vue'
+// import MyInfo from './components/myInfo.vue'
+// import Publish from './components/publish.vue'
+import My from './module/My.vue'
+import MakePop from './module/MakePop.vue'
 
 export default {
   components: {
-    Days,
+    My,
+    //Days,
     List,
-    MyInfo,
-    Publish
+    // MyInfo,
+    MakePop
   },
   data () {
     let myinfo = {}
@@ -69,7 +68,7 @@ export default {
       day: dayStore.fetch(),
       myinfo: myinfo,
       list: itemStore.fetch(),
-      isShowPublish: false
+      isShowMakePop: false
     }
   },
   watch: {
@@ -113,12 +112,13 @@ export default {
     * 事件绑定：显示制作弹窗
     * @model this
     */
-    showMakeVideoPop: function () {
+    showMakePop: function () {
+      this.isShowMakePop = true
       // if (this.myinfo.power === 0) {
       //   alert('no power, pls next day')
       //   return
       // }
-      this.isShowPublish = true
+      // this.isShowPublish = true
     },
 
 
