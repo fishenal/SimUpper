@@ -52,6 +52,9 @@ export default {
     // remove: function (index, item) {
     //   this.$emit('remove', index, item)
     // }
+    nextDay: function () {
+
+    },
     save: function () {
 
     },

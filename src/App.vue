@@ -15,7 +15,8 @@
     </div>
   </div>
   <div v-if="isShowMakePop">
-    <make-pop></make-pop>
+    <make-pop
+    @onclose="hideMakeVideoPop"></make-pop>
   </div>
   
 </template>
@@ -127,7 +128,7 @@ export default {
     * @model Publish
     */
     hideMakeVideoPop: function () {
-      this.isShowPublish = false
+      this.isShowMakePop = false
     },
 
 

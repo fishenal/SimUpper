@@ -104,10 +104,10 @@ export default {
           title: this.vtitle
         })
         this.$emit('make', newItem)
-        this.$emit('hide')
+        this.$emit('onclose')
     },
     hide: function () {
-        this.$emit('hide')
+        this.$emit('onclose')
     },
     selectStyle: function (item) {
         this.vstyle = item;
