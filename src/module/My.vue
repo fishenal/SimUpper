@@ -5,14 +5,14 @@
     </div>
     <div class="dt-item-8">
         <ul class="dt-list-3 dt-light">
-          <li>username: {{username}}</li>
-          <li>follower: {{follower}}</li>
-          <li>publish: {{publish}}</li>
-          <li>power: {{power}}</li>
+          <li>username: {{myinfo.username}}</li>
+          <li>follower: {{myinfo.follower}}</li>
+          <li>publish: {{myinfo.publish}}</li>
+          <li>power: {{myinfo.power}}</li>
         </ul>
         <h2>技能</h2>
         <ul class="dt-list-3 dt-light">
-          <li v-for="item in abilities">
+          <li v-for="item in myinfo.abilities">
             {{ item.label }} : {{ item.abi }}
           </li>
         </ul>   
@@ -23,7 +23,7 @@
           <h3 class="dt-light">day {{day}}</h3>
       </div>
       <div class="dt-item-2">
-          <div class="dt-button" @:click="nextDay">
+          <div class="dt-button" @click="nextDay">
               <a href="#">next</a>
           </div>
       </div>  
@@ -31,15 +31,35 @@
 </template>
 
 <script>
+import _ from 'lodash'
+import { dayStore, myStore } from './store.js'
 export default {
   data () {
+    let myinfo = {}
+    if (myStore.isEmpty()) {
+      myinfo.username = 'test222'
+      myinfo.power = 100
+      myinfo.follower = 100
+      myinfo.publish = itemStore.fetch().length
+      let abilities = [];
+      // 能力高斯随机
+      let abilityDis = Gau(50, 0.05)
+      _.forEach(vTypeList, function(item, key) {
+        abilities.push({
+          label: item.label,
+          abi: abilityDis.ppf(Math.random())
+        })
+      })
+      myinfo.abilities = abilities
+      myStore.save(myinfo)
+    }
+    else {
+      myinfo = myStore.fetch()
+    }
+    
     return {
-        username: '',
-        follower: 0,
-        publish: 0,
-        power: 0,
-        abilities: {},
-        day: 1
+      day: dayStore.fetch(),
+      myinfo: myinfo
     }
   },
   methods: {
@@ -53,28 +73,77 @@ export default {
     //   this.$emit('remove', index, item)
     // }
     nextDay: function () {
-
+      debugger;
+      this.day ++
+      this.myinfo.power = 100
+      // this.loopListPerDay()
     },
     save: function () {
 
     },
     fetch: function () {
 
+    },
+    /*
+    * 技能强化
+    * @depend this.myinfo.abilities
+    * @depend item.type.label
+    * @param item
+    * @output this.myinfo.abilities
+    */
+    enhanceAbi: function (item) {
+      _.forEach(this.myinfo.abilities, function(abi) {
+        if (abi.label === item.type.label) {
+        switch (item.score) {
+          case 'a++':
+            abi.abi += abi.abi * 0.03
+            break;
+          case 'a+':
+            abi.abi += abi.abi * 0.02
+            break;
+          case 'a':
+            abi.abi += abi.abi * 0.01
+            break;
+          case 'b':
+            break;
+          case 'c':
+            abi.abi -= abi.abi * 0.01
+            break;
+          case 'c-':
+            abi.abi -= abi.abi * 0.02
+            break;
+          case 'c--':
+            abi.abi -= abi.abi * 0.03
+            break;
+        }
+          
+        }
+      })
+    },
+
+    /*
+    * 能量消耗
+    * @depend item.quality.costPower
+    * @param item
+    * @output myinfo.power
+    */
+    costPower: function (item) {
+      this.myinfo.power -= 100 * item.quality.costPower
     }
-  }
-  // watch: {
-  //     list: {
-  //       handler: function () {
-  //           this.$emit('update', this.list)
-  //       },
-  //       deep: true
-  //     }
-  // },
-  // events: {
-  //   'refresh-list': function () {
-  //       this.list = itemStore.fetch()
-  //   }
-  // }
+  },
+  watch: {
+    day: {
+      handler: function (day) {
+        dayStore.save(day)
+      }
+    },
+    myinfo: {
+      handler: function (my) {
+        myStore.save(my)
+      },
+      deep: true
+    }
+  },
 }
 </script>
 

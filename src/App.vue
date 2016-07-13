@@ -1,22 +1,23 @@
 <template>
   <div id="app">
     <div id="left">
-      <my></my>
+      <my v-ref:my></my>
       <div class="dt-button" @click="showMakePop">
           <a href="#">make</a>
       </div>
     </div>
     <div id="right">
-      <list 
-      :list="list"
-      @continuemake="continueMake"
-      @publish="publish"
-      @remove="remove">
+      <list
+      v-ref:list
+      @oncontinuee="continueMake"
+      @onpublish="onPublish"
+      >
     </div>
   </div>
   <div v-if="isShowMakePop">
     <make-pop
-    @onclose="hideMakeVideoPop"></make-pop>
+    @onclose="hideMakeVideoPop"
+    @onmake="makeNewVideo"></make-pop>
   </div>
   
 </template>
@@ -28,7 +29,7 @@ import { vTypeList } from './module/data.js'
 import { dayStore, itemStore, myStore } from './module/store.js'
 
 //import Days from './components/days.vue'
-import List from './components/list.vue'
+import List from './module/list.vue'
 // import MyInfo from './components/myInfo.vue'
 // import Publish from './components/publish.vue'
 import My from './module/My.vue'
@@ -42,55 +43,12 @@ export default {
     // MyInfo,
     MakePop
   },
-  data () {
-    let myinfo = {}
-    if (myStore.isEmpty()) {
-      myinfo.username = 'test222'
-      myinfo.power = 100
-      myinfo.follower = 100
-      myinfo.publish = itemStore.fetch().length
-      let abilities = [];
-      // 能力高斯随机
-      let abilityDis = Gau(50, 0.05)
-      _.forEach(vTypeList, function(item, key) {
-        abilities.push({
-          label: item.label,
-          abi: abilityDis.ppf(Math.random())
-        })
-      })
-      myinfo.abilities = abilities
-      myStore.save(myinfo)
-    }
-    else {
-      myinfo = myStore.fetch()
-    }
-    
+  data () {   
     return {
-      day: dayStore.fetch(),
-      myinfo: myinfo,
-      list: itemStore.fetch(),
       isShowMakePop: false
     }
   },
   watch: {
-    day: {
-      handler: function (day) {
-        dayStore.save(day)
-      }
-    },
-    myinfo: {
-      handler: function (my) {
-        myStore.save(my)
-      },
-      deep: true
-    },
-    list: {
-      handler: function (list) {
-        itemStore.save(list)
-        this.myinfo.publish = this.list.length
-      },
-      deep: true
-    }
   },
   ready: function () {
 
@@ -102,11 +60,11 @@ export default {
     * 事件绑定：下一天
     * @model Day
     */
-    nextDay: function () {
-      this.day ++
-      this.myinfo.power = 100
-      this.loopListPerDay()
-    },
+    // nextDay: function () {
+    //   this.day ++
+    //   this.myinfo.power = 100
+    //   this.loopListPerDay()
+    // },
 
 
     /*
@@ -131,37 +89,53 @@ export default {
       this.isShowMakePop = false
     },
 
+    makeNewVideo: function (props) {
+      let myinfo = this.$refs.my.myinfo
+      let newVideo = this.$refs.list.addNew(props, myinfo)
 
+      if (this.$refs.my.myinfo.power < 100 * newVideo.quality.costPower) {
+        alert('not enough power')
+        return
+      }
+
+      this.$refs.my.costPower(newVideo)
+      this.$refs.my.enhanceAbi(newVideo)
+    },
+
+    onPublish: function (video) {
+      let myinfo = this.$refs.my.myinfo
+      myinfo.follower += video.like / 2
+      let userFollDis = Gau(20, 0.004)
+      myinfo.follower += video.playtime * userFollDis.ppf(Math.random()) / 100
+    },
     /*
     * 事件绑定：制作新item提交至list
     * @model Publish
     */
-    make: function (newItem) {
-      if (this.myinfo.power < 100 * newItem.quality.costPower) {
-        alert('not enough power')
-        return
-      }
-      this.calInnerQual(newItem)
-      this.costPower(newItem)
-      this.updateFinishStatus(newItem)
-      this.enhanceAbi(newItem)
-      this.list.push(newItem)
-    },
+    // make: function (newItem) {
+    //   if (this.myinfo.power < 100 * newItem.quality.costPower) {
+    //     alert('not enough power')
+    //     return
+    //   }
+    //   this.calInnerQual(newItem)
+    //   this.costPower(newItem)
+    //   this.updateFinishStatus(newItem)
+    //   this.enhanceAbi(newItem)
+    //   this.list.push(newItem)
+    // },
 
 
     /*
     * 事件绑定：在list里继续制作item
     * @model List
     */
-    continueMake: function (index, item) {
-      if (this.myinfo.power < 100 * item.quality.costPower) {
+    continueMake: function (video) {
+      if (this.$refs.my.myinfo.power < 100 * video.quality.costPower) {
         alert('not enough power')
         return
       }
-      this.costPower(item)
-      this.updateFinishStatus(item)
-      this.enhanceAbi(item)
-      this.list.$set(index, item)
+      this.$refs.my.costPower(video)
+      this.$refs.my.enhanceAbi(video)
     },
 
 
@@ -169,67 +143,32 @@ export default {
     * 事件绑定：发布某项item
     * @model List
     */
-    publish: function (index, item) {
-      item.online = true
-      item.day = 1
+    // publish: function (index, item) {
+    //   item.online = true
+    //   item.day = 1
 
-      this.calPlaytime(item)
+    //   this.calPlaytime(item)
       
-      this.calLike(item)
+    //   this.calLike(item)
 
-      this.calCommit(item)
+    //   this.calCommit(item)
 
-      this.calFollower(item)
+    //   this.calFollower(item)
 
-      this.list.$set(index, item)
-    },
+    //   this.list.$set(index, item)
+    // },
 
 
     /*
     * 事件绑定：删除某项item
     * @model List
     */
-    remove: function (index, item) {
-      this.list.$remove(item)
-    },
+    // remove: function (index, item) {
+    //   this.list.$remove(item)
+    // },
 
 
-    /*
-    * 技能强化
-    * @depend this.myinfo.abilities
-    * @depend item.type.label
-    * @param item
-    * @output this.myinfo.abilities
-    */
-    enhanceAbi: function (item) {
-      _.forEach(this.myinfo.abilities, function(abi) {
-        if (abi.label === item.type.label) {
-        switch (item.score) {
-          case 'a++':
-            abi.abi += abi.abi * 0.03
-            break;
-          case 'a+':
-            abi.abi += abi.abi * 0.02
-            break;
-          case 'a':
-            abi.abi += abi.abi * 0.01
-            break;
-          case 'b':
-            break;
-          case 'c':
-            abi.abi -= abi.abi * 0.01
-            break;
-          case 'c-':
-            abi.abi -= abi.abi * 0.02
-            break;
-          case 'c--':
-            abi.abi -= abi.abi * 0.03
-            break;
-        }
-          
-        }
-      })
-    },
+    
 
 
     /*
@@ -238,9 +177,9 @@ export default {
     * @param item
     * @output myinfo.power
     */
-    costPower: function (item) {
-      this.myinfo.power -= 100 * item.quality.costPower
-    },
+    // costPower: function (item) {
+    //   this.myinfo.power -= 100 * item.quality.costPower
+    // },
 
     /*
     * 更新完成状态
@@ -249,9 +188,9 @@ export default {
     * @param item
     * @output finishStatus
     */
-    updateFinishStatus: function (item) {
-      item.finishStatus = item.finishStatus + 100 * item.quality.finishStatus
-    },
+    // updateFinishStatus: function (item) {
+    //   item.finishStatus = item.finishStatus + 100 * item.quality.finishStatus
+    // },
 
 
     /*
@@ -262,57 +201,57 @@ export default {
     * @output videoInnerQuality
     */
     calInnerQual: function (item) {
-        // 计算视频评分
-        let videoInnerQuality = 100
-        let score
-        // 相应种类视频技巧系数
-        let techRatio = this.myinfo.abilities[item.type.id].abi / 100
-        videoInnerQuality *= techRatio
-        // 计算视频质量系数
-        let vQualityRatio
-        // 质量高斯随机
-        let highQualityDis = Gau(120, 0.4)
-        let midQualityDis = Gau(100, 0.3)
-        let lowQualityDis = Gau(50, 0.02)
-        let randomQualityDis = Gau(100, 0.1)
-        if (item.quality.id === 0) { //优良
-          vQualityRatio = highQualityDis.ppf(0.5)
-        }
-        else if (item.quality.id === 1) { //中等
-          vQualityRatio = midQualityDis.ppf(0.5)
-        }
-        else if (item.quality.id === 2) { // 粗糙
-          vQualityRatio = lowQualityDis.ppf(0.5)
-        }
-        videoInnerQuality *= vQualityRatio / 100
+        // // 计算视频评分
+        // let videoInnerQuality = 100
+        // let score
+        // // 相应种类视频技巧系数
+        // let techRatio = this.myinfo.abilities[item.type.id].abi / 100
+        // videoInnerQuality *= techRatio
+        // // 计算视频质量系数
+        // let vQualityRatio
+        // // 质量高斯随机
+        // let highQualityDis = Gau(120, 0.4)
+        // let midQualityDis = Gau(100, 0.3)
+        // let lowQualityDis = Gau(50, 0.02)
+        // let randomQualityDis = Gau(100, 0.1)
+        // if (item.quality.id === 0) { //优良
+        //   vQualityRatio = highQualityDis.ppf(0.5)
+        // }
+        // else if (item.quality.id === 1) { //中等
+        //   vQualityRatio = midQualityDis.ppf(0.5)
+        // }
+        // else if (item.quality.id === 2) { // 粗糙
+        //   vQualityRatio = lowQualityDis.ppf(0.5)
+        // }
+        // videoInnerQuality *= vQualityRatio / 100
 
-        // 质量随机系数
+        // // 质量随机系数
         
-        let randomRatio = randomQualityDis.ppf(Math.random()) / 100
-        videoInnerQuality *= randomRatio
-        if (videoInnerQuality < 30) {
-          score = 'c--'
-        }
-        else if (videoInnerQuality < 60) {
-          score = 'c-'
-        }
-        else if (videoInnerQuality < 100) {
-          score = 'c'
-        }
-        else if (videoInnerQuality > 200) {
-          score = 'a++'
-        }
-        else if (videoInnerQuality > 160) {
-          score = 'a+'
-        }
-        else if (videoInnerQuality > 130) {
-          score = 'a'
-        }
-        else {
-          score = 'b'
-        }
-        console.log('视频质量', videoInnerQuality)
-        item.score = score
+        // let randomRatio = randomQualityDis.ppf(Math.random()) / 100
+        // videoInnerQuality *= randomRatio
+        // if (videoInnerQuality < 30) {
+        //   score = 'c--'
+        // }
+        // else if (videoInnerQuality < 60) {
+        //   score = 'c-'
+        // }
+        // else if (videoInnerQuality < 100) {
+        //   score = 'c'
+        // }
+        // else if (videoInnerQuality > 200) {
+        //   score = 'a++'
+        // }
+        // else if (videoInnerQuality > 160) {
+        //   score = 'a+'
+        // }
+        // else if (videoInnerQuality > 130) {
+        //   score = 'a'
+        // }
+        // else {
+        //   score = 'b'
+        // }
+        // console.log('视频质量', videoInnerQuality)
+        // item.score = score
     },
 
 
@@ -323,21 +262,21 @@ export default {
     * @output playtime
     * @output rePlaytime
     */
-    calPlaytime: function (item) {
-      // 计算播放量
-      let follower = this.myinfo.follower
-      let publishNum = this.list.length
-      // 播放量高斯随机
-      let follDis = Gau(50, 0.02)
-      let ptimeRanDis = Gau(100, 0.1)
-      let playtime =
-      follower + (follower * follDis.ppf(Math.random()) / 100)
-      * item.videoInnerQuality / 100
-      * ptimeRanDis.ppf(Math.random()) / 100
-      playtime = parseInt(playtime)
-      item.playtime = playtime
-      item.rePlaytime = playtime
-    },
+    // calPlaytime: function (item) {
+    //   // 计算播放量
+    //   let follower = this.myinfo.follower
+    //   let publishNum = this.list.length
+    //   // 播放量高斯随机
+    //   let follDis = Gau(50, 0.02)
+    //   let ptimeRanDis = Gau(100, 0.1)
+    //   let playtime =
+    //   follower + (follower * follDis.ppf(Math.random()) / 100)
+    //   * item.videoInnerQuality / 100
+    //   * ptimeRanDis.ppf(Math.random()) / 100
+    //   playtime = parseInt(playtime)
+    //   item.playtime = playtime
+    //   item.rePlaytime = playtime
+    // },
 
 
     /*
@@ -348,21 +287,21 @@ export default {
     * @output like
     * @output reLike
     */
-    calLike: function (item) {
-      // 计算like
-      let likeQuality
-      // like高斯随机
-      let likeDis = Gau(20, 0.005)
-      if (item.videoInnerQuality > 100) {
-        likeQuality = 1
-      }
-      else {
-        likeQuality = item.videoInnerQuality / 100
-      }
-      let like = parseInt(item.playtime * likeQuality * likeDis.ppf(Math.random()) / 100)
-      item.like = like
-      item.reLike = like
-    },
+    // calLike: function (item) {
+    //   // 计算like
+    //   let likeQuality
+    //   // like高斯随机
+    //   let likeDis = Gau(20, 0.005)
+    //   if (item.videoInnerQuality > 100) {
+    //     likeQuality = 1
+    //   }
+    //   else {
+    //     likeQuality = item.videoInnerQuality / 100
+    //   }
+    //   let like = parseInt(item.playtime * likeQuality * likeDis.ppf(Math.random()) / 100)
+    //   item.like = like
+    //   item.reLike = like
+    // },
 
 
     /*
@@ -372,88 +311,88 @@ export default {
     * @param item
     * @output item.commits
     */
-    calCommit: function (item) {
-      let commits = []
-      let commitsLength
-      let badLength
-      let goodLength
-      let commonLength
-      if (item.playtime < 1000) {
-        commitsLength  = item.playtime * _.random(0.01, 0.02) / 50
-      }
-      else if (item.playtime > 10000){
-        commitsLength  = item.playtime * _.random(0.05, 0.1) / 50
-      }
-      else {
-        commitsLength  = item.playtime * _.random(0.02, 0.03) / 50
-      }
-      // 如果超过1000 取前三位
-      // if (commitsLength >= 1000) {
-      //   commitsLength = + commitsLength.toString.substring(0, 3)
-      // }
+    // calCommit: function (item) {
+    //   let commits = []
+    //   let commitsLength
+    //   let badLength
+    //   let goodLength
+    //   let commonLength
+    //   if (item.playtime < 1000) {
+    //     commitsLength  = item.playtime * _.random(0.01, 0.02) / 50
+    //   }
+    //   else if (item.playtime > 10000){
+    //     commitsLength  = item.playtime * _.random(0.05, 0.1) / 50
+    //   }
+    //   else {
+    //     commitsLength  = item.playtime * _.random(0.02, 0.03) / 50
+    //   }
+    //   // 如果超过1000 取前三位
+    //   // if (commitsLength >= 1000) {
+    //   //   commitsLength = + commitsLength.toString.substring(0, 3)
+    //   // }
 
-      let badNum = 0
-      switch (item.score) {
-        case 'a++':
-          badLength = commitsLength * 0.05
-          goodLength = commitsLength * 0.8
-          commonLength = commitsLength - goodLength - badLength
-          break;
-        case 'a+':
-          badLength = commitsLength * 0.1
-          goodLength = commitsLength * 0.7
-          commonLength = commitsLength - goodLength - badLength
-          break;
-        case 'a':
-          badLength = commitsLength * 0.2
-          goodLength = commitsLength * 0.6
-          commonLength = commitsLength - goodLength - badLength
-          break;
-        case 'b':
-          badLength = commitsLength * 0.3
-          goodLength = commitsLength * 0.3
-          commonLength = commitsLength - goodLength - badLength
-          break;
-        case 'c':
-          badLength = commitsLength * 0.3
-          goodLength = commitsLength * 0.2
-          commonLength = commitsLength - goodLength - badLength
-          break;
-        case 'c-':
-          badLength = commitsLength * 0.5
-          goodLength = commitsLength * 0.1
-          commonLength = commitsLength - goodLength - badLength
-          break;
-        case 'c--':
-          badLength = commitsLength * 0.8
-          goodLength = commitsLength * 0.1
-          commonLength = commitsLength - goodLength - badLength
-          break;
-      }
-      for (let i = 0; i < badLength; i ++) {
-          commits.push({
-            type: 'bad',
-            cont: 'rabish'
-          })
-      }
-      for (let i = 0; i < goodLength; i ++) {
-          commits.push({
-            type: 'good',
-            cont: 'very good!'
-          })
-      }
-      for (let i = 0; i < commonLength; i ++) {
-          commits.push({
-            type: 'common',
-            cont: 'just soso'
-          })
-      }
-      commits = commits.sort(function () {
-        return Math.random() > .5 ? -1 : 1;   
-      });
+    //   let badNum = 0
+    //   switch (item.score) {
+    //     case 'a++':
+    //       badLength = commitsLength * 0.05
+    //       goodLength = commitsLength * 0.8
+    //       commonLength = commitsLength - goodLength - badLength
+    //       break;
+    //     case 'a+':
+    //       badLength = commitsLength * 0.1
+    //       goodLength = commitsLength * 0.7
+    //       commonLength = commitsLength - goodLength - badLength
+    //       break;
+    //     case 'a':
+    //       badLength = commitsLength * 0.2
+    //       goodLength = commitsLength * 0.6
+    //       commonLength = commitsLength - goodLength - badLength
+    //       break;
+    //     case 'b':
+    //       badLength = commitsLength * 0.3
+    //       goodLength = commitsLength * 0.3
+    //       commonLength = commitsLength - goodLength - badLength
+    //       break;
+    //     case 'c':
+    //       badLength = commitsLength * 0.3
+    //       goodLength = commitsLength * 0.2
+    //       commonLength = commitsLength - goodLength - badLength
+    //       break;
+    //     case 'c-':
+    //       badLength = commitsLength * 0.5
+    //       goodLength = commitsLength * 0.1
+    //       commonLength = commitsLength - goodLength - badLength
+    //       break;
+    //     case 'c--':
+    //       badLength = commitsLength * 0.8
+    //       goodLength = commitsLength * 0.1
+    //       commonLength = commitsLength - goodLength - badLength
+    //       break;
+    //   }
+    //   for (let i = 0; i < badLength; i ++) {
+    //       commits.push({
+    //         type: 'bad',
+    //         cont: 'rabish'
+    //       })
+    //   }
+    //   for (let i = 0; i < goodLength; i ++) {
+    //       commits.push({
+    //         type: 'good',
+    //         cont: 'very good!'
+    //       })
+    //   }
+    //   for (let i = 0; i < commonLength; i ++) {
+    //       commits.push({
+    //         type: 'common',
+    //         cont: 'just soso'
+    //       })
+    //   }
+    //   commits = commits.sort(function () {
+    //     return Math.random() > .5 ? -1 : 1;   
+    //   });
 
-      item.commits = commits
-    },
+    //   item.commits = commits
+    // },
 
 
     /*
@@ -463,11 +402,11 @@ export default {
     * @param item
     * @output this.myinfo.follower
     */
-    calFollower: function (item) {
-      this.myinfo.follower += item.like / 2
-      let userFollDis = Gau(20, 0.004)
-      this.myinfo.follower += item.playtime * userFollDis.ppf(Math.random()) / 100
-    },
+    // calFollower: function (item) {
+    //   this.myinfo.follower += item.like / 2
+    //   let userFollDis = Gau(20, 0.004)
+    //   this.myinfo.follower += item.playtime * userFollDis.ppf(Math.random()) / 100
+    // },
 
 
     /*

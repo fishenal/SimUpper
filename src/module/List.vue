@@ -1,9 +1,8 @@
 <template>
   <div class="up-list">
     <div class="up-item" v-for="(index, item) in list">
-      <!-- <div>
+      <div>
           <h1>{{item.title}} </h1>
-
       </div>
       <div class="up-detail">
           <span>一个{{item.style.label}}的{{item.type.label}}视频</span>
@@ -21,48 +20,60 @@
             </li>
           </ul>
       </div>
-      <div class="dt-button" v-if="item.finishStatus===100&&!item.online" @click="publish(index, item)">
+      <div class="dt-button" v-if="item.finishStatus===100&&!item.online" @click="publish(item)">
           <a href="#">publish</a>
       </div>
-      <div class="dt-button" v-if="item.finishStatus!==100&&!item.online" @click="continuee(index, item)">
+      <div class="dt-button" v-if="item.finishStatus!==100&&!item.online" @click="continuee(item)">
           <a href="#">continue make</a>
       </div>
-      <div class="dt-button" @click="remove(index, item)">
+      <div class="dt-button" @click="remove(item)">
           <a href="#">remove</a>
       </div>
-      <div v-if="item.online">online!</div> -->
+      <div v-if="item.online">online!</div>
     </div>
   </div>
 </template>
 
 <script>
+import { Video } from './video.js'
+import { itemStore } from './store.js'
 export default {
   data () {
     return {
-        ids: [],
-        list: []
-        // list: itemStore.fetch()
+        // list: []
+        list: itemStore.fetch()
     }
   },
   methods: {
-    // continuee: function (index, item) {
-    //   this.$emit('continuemake', index, item)
-    // },
-    // publish: function (index, item) {
-    //   this.$emit('publish', index, item)
-    // },
-    // remove: function (index, item) {
-    //   this.$emit('remove', index, item)
-    // }
-  }
-  // watch: {
-  //     list: {
-  //       handler: function () {
-  //           this.$emit('update', this.list)
-  //       },
-  //       deep: true
-  //     }
-  // },
+    addNew: function (props, my) {
+      let newVideo = new Video(props)
+      newVideo.calInnerQual()
+      newVideo.updateFinishStatus()
+      this.list.push(newVideo)
+      return newVideo
+    },
+    continuee: function (video) {
+      video.updateFinishStatus()
+      this.$emit('oncontinuee', video)
+    },
+    publish: function (video) {
+      debugger;
+      video.publish()
+      this.$emit('onpublish', video)
+      // this.$emit('publish', index, item)
+    },
+    remove: function (video) {
+      this.list.$remove(video)
+    }
+  },
+  watch: {
+      list: {
+        handler: function (newList) {
+          itemStore.save(newList)
+        },
+        deep: true
+      }
+  },
   // events: {
   //   'refresh-list': function () {
   //       this.list = itemStore.fetch()
