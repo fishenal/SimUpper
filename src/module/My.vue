@@ -42,6 +42,7 @@ export default {
       myinfo.username = 'test222'
       myinfo.power = 100
       myinfo.follower = 100
+      myinfo.gold = 9999
       myinfo.publish = itemStore.fetch().length
       let abilities = [];
       // 能力高斯随机
@@ -76,6 +77,9 @@ export default {
     },
     fetch: function () {
 
+    },
+    updateMy: function (myinfo) {
+      this.myinfo = myinfo
     },
     /*
     * 技能强化

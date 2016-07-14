@@ -14,6 +14,7 @@
       v-ref:list
       @oncontinuee="continueMake"
       @onpublish="onPublish"
+      @onmyupdate="triggerMyUpdate"
       >
     </div>
   </div>
@@ -113,6 +114,10 @@ export default {
     onNextDay: function () {
         this.$refs.list.dayBoost()
     },
+
+    triggerMyUpdate: function (myStore) {
+      this.$refs.my.updateMy(myStore)
+    },
     /*
     * 事件绑定：制作新item提交至list
     * @model Publish
@@ -135,10 +140,6 @@ export default {
     * @model List
     */
     continueMake: function (video) {
-      if (this.$refs.my.myinfo.power < 100 * video.quality.costPower) {
-        alert('not enough power')
-        return
-      }
       this.$refs.my.costPower(video)
       this.$refs.my.enhanceAbi(video)
     },

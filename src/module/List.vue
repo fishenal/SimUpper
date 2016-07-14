@@ -36,14 +36,19 @@
 
 <script>
 import _ from 'lodash'
-import { Video } from './video.js'
-import { itemStore } from './store.js'
+import { Video, videoWorkshop } from './video.js'
+import { itemStore, myStore } from './store.js'
 export default {
   data () {
     return {
         // list: []
         list: itemStore.fetch()
     }
+  },
+  ready: function () {
+    videoWorkshop.eventBus.saveMy = function (myStore) {
+      this.$emit('onmyupdate', myStore)
+    }.bind(this)
   },
   methods: {
     addNew: function (props, my) {
@@ -55,12 +60,17 @@ export default {
     },
 
     continuee: function (video) {
+      let myInfo = myStore.fetch()
+      if (myInfo.power < 100 * video.quality.costPower) {
+        alert('not enough power')
+        return
+      }
       this.updateFinishStatus(video)
       this.$emit('oncontinuee', video)
     },
 
     publish: function (video) {
-      video.publish()
+      videoWorkshop.publish(video)
       this.$emit('onpublish', video)
       // this.$emit('publish', index, item)
     },
@@ -71,7 +81,7 @@ export default {
 
     dayBoost: function () {
       _.forEach(this.list, function(video) {
-        video.dayBoost()
+        videoWorkshop.dayBoost(video)
       })
     },
 
