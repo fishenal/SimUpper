@@ -1,5 +1,5 @@
 import Gau from 'gaussian'
-import { myStore } from './store.js'
+import { myStore, itemStore } from './store.js'
 class Video {
     constructor (props) {
         for (let key in props) {
@@ -19,6 +19,17 @@ class Video {
 
     }
 
+    getMy () {
+      return myStore.fetch()
+    }
+
+    saveMy (my) {
+      myStore.save(my)
+    }
+
+    getVideos () {
+      return itemStore.fetch()
+    }
     /*
     * 计算内部质量
     * @depend item.type.id
@@ -27,11 +38,12 @@ class Video {
     * @output videoInnerQuality
     */
     calInnerQual () {
+        let myStore = this.getMy()
         // 计算视频评分
         let videoInnerQuality = 100
         let score
         // 相应种类视频技巧系数
-        let techRatio = myStore.fetch().abilities[this.type.id].abi / 100
+        let techRatio = myStore.abilities[this.type.id].abi / 100
         videoInnerQuality *= techRatio
         // 计算视频质量系数
         let vQualityRatio
@@ -99,11 +111,10 @@ class Video {
     * @output rePlaytime
     */
     calPlaytime () {
-        debugger;
-        let myInfo = myStore.fetch().myinfo
+        let myStore = this.getMy()
         // 计算播放量
-        let follower = myInfo.follower
-        let publishNum = this.list.length
+        let follower = myStore.follower
+        let publishNum = this.getVideos().length
         // 播放量高斯随机
         let follDis = Gau(50, 0.02)
         let ptimeRanDis = Gau(100, 0.1)
@@ -232,5 +243,26 @@ class Video {
 
       this.commits = commits
     }
+
+    dayBoost () {
+      if (this.online) {
+        let myStore = this.getMy()
+        this.day ++
+        let deltptime = parseInt(this.rePlaytime / this.day) // + 随机
+        let dellike = parseInt(this.reLike / this.day)
+        this.playtime +=  deltptime
+        this.like += dellike
+
+        // 粉丝增长
+        let userFollDis = Gau(20, 0.05)
+        myStore.follower += deltptime * userFollDis.ppf(Math.random()) / 100
+        myStore.follower += dellike / 2
+
+        this.saveMy(myStore)
+        // 评论
+        console.log(deltptime, dellike)
+      }
+    }
+    
 }
 export { Video }

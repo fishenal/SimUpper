@@ -1,7 +1,10 @@
 <template>
   <div id="app">
     <div id="left">
-      <my v-ref:my></my>
+      <my
+      v-ref:my
+      @onnextday="onNextDay"
+      ></my>
       <div class="dt-button" @click="showMakePop">
           <a href="#">make</a>
       </div>
@@ -25,8 +28,8 @@
 <script>
 import _ from 'lodash'
 import Gau from 'gaussian'
-import { vTypeList } from './module/data.js'
-import { dayStore, itemStore, myStore } from './module/store.js'
+// import { vTypeList } from './module/data.js'
+// import { dayStore, itemStore, myStore } from './module/store.js'
 
 //import Days from './components/days.vue'
 import List from './module/list.vue'
@@ -91,13 +94,11 @@ export default {
 
     makeNewVideo: function (props) {
       let myinfo = this.$refs.my.myinfo
-      let newVideo = this.$refs.list.addNew(props, myinfo)
-
-      if (this.$refs.my.myinfo.power < 100 * newVideo.quality.costPower) {
+      if (this.$refs.my.myinfo.power < 100 * props.quality.costPower) {
         alert('not enough power')
         return
       }
-
+      let newVideo = this.$refs.list.addNew(props, myinfo)
       this.$refs.my.costPower(newVideo)
       this.$refs.my.enhanceAbi(newVideo)
     },
@@ -107,6 +108,10 @@ export default {
       myinfo.follower += video.like / 2
       let userFollDis = Gau(20, 0.004)
       myinfo.follower += video.playtime * userFollDis.ppf(Math.random()) / 100
+    },
+
+    onNextDay: function () {
+        this.$refs.list.dayBoost()
     },
     /*
     * 事件绑定：制作新item提交至list
@@ -414,25 +419,25 @@ export default {
     * @param null
     * @return null
     */
-    loopListPerDay: function () {
-      _.forEach(this.list, function(item) {
-        if (item.online) {
-          item.day ++
-          let deltptime = parseInt(item.rePlaytime / item.day) // + 随机
-          let dellike = parseInt(item.reLike / item.day)
-          item.playtime +=  deltptime
-          item.like += dellike
+    // loopListPerDay: function () {
+    //   _.forEach(this.list, function(item) {
+    //     if (item.online) {
+    //       item.day ++
+    //       let deltptime = parseInt(item.rePlaytime / item.day) // + 随机
+    //       let dellike = parseInt(item.reLike / item.day)
+    //       item.playtime +=  deltptime
+    //       item.like += dellike
 
-          // 粉丝增长
-          let userFollDis = Gau(20, 0.05)
-          this.myinfo.follower += deltptime * userFollDis.ppf(Math.random()) / 100
-          this.myinfo.follower += dellike / 2
+    //       // 粉丝增长
+    //       let userFollDis = Gau(20, 0.05)
+    //       this.myinfo.follower += deltptime * userFollDis.ppf(Math.random()) / 100
+    //       this.myinfo.follower += dellike / 2
 
-          // 评论
-          console.log(deltptime, dellike)
-        }
-      }.bind(this))
-    }
+    //       // 评论
+    //       console.log(deltptime, dellike)
+    //     }
+    //   }.bind(this))
+    // }
   }
 }
 </script>

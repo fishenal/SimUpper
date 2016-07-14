@@ -35,6 +35,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import { Video } from './video.js'
 import { itemStore } from './store.js'
 export default {
@@ -52,19 +53,33 @@ export default {
       this.list.push(newVideo)
       return newVideo
     },
+
     continuee: function (video) {
-      video.updateFinishStatus()
+      this.updateFinishStatus(video)
       this.$emit('oncontinuee', video)
     },
+
     publish: function (video) {
-      debugger;
       video.publish()
       this.$emit('onpublish', video)
       // this.$emit('publish', index, item)
     },
+
     remove: function (video) {
       this.list.$remove(video)
-    }
+    },
+
+    dayBoost: function () {
+      _.forEach(this.list, function(video) {
+        video.dayBoost()
+      })
+    },
+
+    updateFinishStatus: function (item) {
+      item.finishStatus = item.finishStatus + 100 * item.quality.finishStatus
+    },
+
+
   },
   watch: {
       list: {

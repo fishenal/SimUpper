@@ -32,7 +32,9 @@
 
 <script>
 import _ from 'lodash'
-import { dayStore, myStore } from './store.js'
+import Gau from 'gaussian'
+import { vTypeList } from './data.js'
+import { dayStore, myStore, itemStore } from './store.js'
 export default {
   data () {
     let myinfo = {}
@@ -63,19 +65,10 @@ export default {
     }
   },
   methods: {
-    // continuee: function (index, item) {
-    //   this.$emit('continuemake', index, item)
-    // },
-    // publish: function (index, item) {
-    //   this.$emit('publish', index, item)
-    // },
-    // remove: function (index, item) {
-    //   this.$emit('remove', index, item)
-    // }
     nextDay: function () {
-      debugger;
       this.day ++
       this.myinfo.power = 100
+      this.$emit('onnextday')
       // this.loopListPerDay()
     },
     save: function () {
