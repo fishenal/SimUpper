@@ -1,55 +1,44 @@
 <template>
   <div id="app">
     <div id="left">
-      <my
-      v-ref:my
-      @onnextday="onNextDay"
-      ></my>
+      <my></my>
       <div class="dt-button" @click="showMakePop">
           <a href="#">make</a>
       </div>
     </div>
     <div id="right">
-      <list
-      v-ref:list
-      @oncontinuee="continueMake"
-      @onpublish="onPublish"
-      @onmyupdate="triggerMyUpdate"
-      >
+      <list>
     </div>
   </div>
   <div v-if="isShowMakePop">
     <make-pop
-    @onclose="hideMakeVideoPop"
-    @onmake="makeNewVideo"></make-pop>
+    @onclose="hideMakeVideoPop"></make-pop>
   </div>
   
 </template>
 
 <script>
-import _ from 'lodash'
-import Gau from 'gaussian'
-// import { vTypeList } from './module/data.js'
-// import { dayStore, itemStore, myStore } from './module/store.js'
-
-//import Days from './components/days.vue'
-import List from './module/list.vue'
-// import MyInfo from './components/myInfo.vue'
-// import Publish from './components/publish.vue'
-import My from './module/My.vue'
-import MakePop from './module/MakePop.vue'
-
+/*import _ from 'lodash'
+import Gau from 'gaussian'*/
+import List from './components/list.vue'
+import My from './components/My.vue'
+import MakePop from './components/MakePop.vue'
+import store from './vuex/store'
 export default {
   components: {
     My,
-    //Days,
     List,
-    // MyInfo,
     MakePop
   },
-  data () {   
+  store,
+  vuex: {
+    getters: {
+      day: state => state.day,  
+    }
+  },
+  data () {
     return {
-      isShowMakePop: false
+        isShowMakePop: false
     }
   },
   watch: {
@@ -57,40 +46,10 @@ export default {
   ready: function () {
 
   },
-  events: {
-    'gett': function (target) {
-        console.log(this.$refs[target].gett())
-        return this.$refs[target].gett()
-    }
-  },
   methods: {
-
-
-    /*
-    * 事件绑定：下一天
-    * @model Day
-    */
-    // nextDay: function () {
-    //   this.day ++
-    //   this.myinfo.power = 100
-    //   this.loopListPerDay()
-    // },
-
-
-    /*
-    * 事件绑定：显示制作弹窗
-    * @model this
-    */
     showMakePop: function () {
       this.isShowMakePop = true
-      // if (this.myinfo.power === 0) {
-      //   alert('no power, pls next day')
-      //   return
-      // }
-      // this.isShowPublish = true
     },
-
-
     /*
     * 事件绑定：隐藏制作弹窗
     * @model Publish
@@ -99,31 +58,31 @@ export default {
       this.isShowMakePop = false
     },
 
-    makeNewVideo: function (props) {
-      let myinfo = this.$refs.my.myinfo
-      if (this.$refs.my.myinfo.power < 100 * props.quality.costPower) {
-        alert('not enough power')
-        return
-      }
-      let newVideo = this.$refs.list.addNew(props, myinfo)
-      this.$refs.my.costPower(newVideo)
-      this.$refs.my.enhanceAbi(newVideo)
-    },
+    // makeNewVideo: function (props) {
+    //   let myinfo = this.$refs.my.myinfo
+    //   if (this.$refs.my.myinfo.power < 100 * props.quality.costPower) {
+    //     alert('not enough power')
+    //     return
+    //   }
+    //   let newVideo = this.$refs.list.addNew(props, myinfo)
+    //   this.$refs.my.costPower(newVideo)
+    //   this.$refs.my.enhanceAbi(newVideo)
+    // },
 
-    onPublish: function (video) {
-      let myinfo = this.$refs.my.myinfo
-      myinfo.follower += video.like / 2
-      let userFollDis = Gau(20, 0.004)
-      myinfo.follower += video.playtime * userFollDis.ppf(Math.random()) / 100
-    },
+    // onPublish: function (video) {
+    //   let myinfo = this.$refs.my.myinfo
+    //   myinfo.follower += video.like / 2
+    //   let userFollDis = Gau(20, 0.004)
+    //   myinfo.follower += video.playtime * userFollDis.ppf(Math.random()) / 100
+    // },
 
-    onNextDay: function () {
-        this.$refs.list.dayBoost()
-    },
+    // onNextDay: function () {
+    //     this.$refs.list.dayBoost()
+    // },
 
-    triggerMyUpdate: function (myStore) {
-        this.$refs.my.updateMy(myStore)
-    },
+    // triggerMyUpdate: function (myStore) {
+    //     this.$refs.my.updateMy(myStore)
+    // },
     /*
     * 事件绑定：制作新item提交至list
     * @model Publish
@@ -145,10 +104,10 @@ export default {
     * 事件绑定：在list里继续制作item
     * @model List
     */
-    continueMake: function (video) {
-      this.$refs.my.costPower(video)
-      this.$refs.my.enhanceAbi(video)
-    },
+    // continueMake: function (video) {
+    //   this.$refs.my.costPower(video)
+    //   this.$refs.my.enhanceAbi(video)
+    // },
 
 
     /*
@@ -212,61 +171,6 @@ export default {
     * @param item
     * @output videoInnerQuality
     */
-    calInnerQual: function (item) {
-        // // 计算视频评分
-        // let videoInnerQuality = 100
-        // let score
-        // // 相应种类视频技巧系数
-        // let techRatio = this.myinfo.abilities[item.type.id].abi / 100
-        // videoInnerQuality *= techRatio
-        // // 计算视频质量系数
-        // let vQualityRatio
-        // // 质量高斯随机
-        // let highQualityDis = Gau(120, 0.4)
-        // let midQualityDis = Gau(100, 0.3)
-        // let lowQualityDis = Gau(50, 0.02)
-        // let randomQualityDis = Gau(100, 0.1)
-        // if (item.quality.id === 0) { //优良
-        //   vQualityRatio = highQualityDis.ppf(0.5)
-        // }
-        // else if (item.quality.id === 1) { //中等
-        //   vQualityRatio = midQualityDis.ppf(0.5)
-        // }
-        // else if (item.quality.id === 2) { // 粗糙
-        //   vQualityRatio = lowQualityDis.ppf(0.5)
-        // }
-        // videoInnerQuality *= vQualityRatio / 100
-
-        // // 质量随机系数
-        
-        // let randomRatio = randomQualityDis.ppf(Math.random()) / 100
-        // videoInnerQuality *= randomRatio
-        // if (videoInnerQuality < 30) {
-        //   score = 'c--'
-        // }
-        // else if (videoInnerQuality < 60) {
-        //   score = 'c-'
-        // }
-        // else if (videoInnerQuality < 100) {
-        //   score = 'c'
-        // }
-        // else if (videoInnerQuality > 200) {
-        //   score = 'a++'
-        // }
-        // else if (videoInnerQuality > 160) {
-        //   score = 'a+'
-        // }
-        // else if (videoInnerQuality > 130) {
-        //   score = 'a'
-        // }
-        // else {
-        //   score = 'b'
-        // }
-        // console.log('视频质量', videoInnerQuality)
-        // item.score = score
-    },
-
-
     /*
     * 计算播放量
     * @depend item.videoInnerQuality
