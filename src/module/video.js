@@ -74,6 +74,7 @@ class Video {
         }
         console.log('视频质量', videoInnerQuality)
         this.score = score
+        return score
     }
 
     /*
@@ -101,7 +102,7 @@ let videoWorkshop = {
       this.calLike(video)
 
       this.calCommit(video)
-
+      this.eventBus.onPublish(video)
   },
   /*
   * 计算播放量
@@ -248,11 +249,12 @@ let videoWorkshop = {
           cont: 'just soso'
         })
     }
+    video.addGoodCommitsNum = goodLength
     return commits
   },
   dayBoost (video) {
     if (video.online) {
-      let _myStore = myStore.fetch()
+      // let _myStore = myStore.fetch()
       video.day ++
       let deltptime = parseInt(video.rePlaytime / video.day / 2) // + 随机
       let dellike = parseInt(video.reLike / video.day)
@@ -271,10 +273,9 @@ let videoWorkshop = {
 
       // 粉丝增长
       let userFollDis = Gau(20, 0.05)
-      _myStore.follower += deltptime * userFollDis.ppf(Math.random()) / 100
-      _myStore.follower += dellike / 2
+      video.effectFollower = deltptime * userFollDis.ppf(Math.random()) / 100 + dellike / 2
       // debugger
-      this.eventBus.saveMy(_myStore)
+      // this.eventBus.saveMy(_myStore)
       // myStore.save()
       // 评论
       console.log(deltptime, dellike)

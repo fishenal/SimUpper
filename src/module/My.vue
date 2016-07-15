@@ -9,6 +9,7 @@
           <li>follower: {{myinfo.follower}}</li>
           <li>publish: {{myinfo.publish}}</li>
           <li>power: {{myinfo.power}}</li>
+          <li>gold: {{myinfo.gold}}</li>
         </ul>
         <h2>技能</h2>
         <ul class="dt-list-3 dt-light">
@@ -65,12 +66,21 @@ export default {
       myinfo: myinfo
     }
   },
+  events: {
+    'getmy': function () {
+      return this.myinfo
+    },
+    'setmy': function () {
+      console.log('set my')
+    }
+  },
   methods: {
+    gett: function () {
+      return this.myinfo
+    },
     nextDay: function () {
       this.day ++
-      this.myinfo.power = 100
       this.$emit('onnextday')
-      // this.loopListPerDay()
     },
     save: function () {
 

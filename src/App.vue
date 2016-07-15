@@ -57,6 +57,12 @@ export default {
   ready: function () {
 
   },
+  events: {
+    'gett': function (target) {
+        console.log(this.$refs[target].gett())
+        return this.$refs[target].gett()
+    }
+  },
   methods: {
 
 
@@ -116,7 +122,7 @@ export default {
     },
 
     triggerMyUpdate: function (myStore) {
-      this.$refs.my.updateMy(myStore)
+        this.$refs.my.updateMy(myStore)
     },
     /*
     * 事件绑定：制作新item提交至list

@@ -59,6 +59,7 @@ let itemModel = {
   playtime: 0,
   like: 0,
   commits: [],
+  addGoodCommitsNum: 0,
   finishStatus: 0,
   online: false,
   day: 0
