@@ -8,7 +8,7 @@ const VideoObjectModel = {
   type: null,
   style: null,
   quality: null,
-  videoInnerQuality: 0,
+  score: 0,
   playtime: 0,
   like: 0,
   commits: [],
@@ -50,13 +50,13 @@ const mutations = {
     state.power -= newVideo.quality.costPower
 
     // 增加金钱
-    state.gold += VideoFunc.getAddGoldDependVideo(newVideo)
+    state.gold += parseInt(newVideo.score)
 
     // 能力增强
     let thisAbi = _.find(state.abilities, function (abi, index) {
       return abi.label === newVideo.type.label
     })
-    thisAbi.abi += thisAbi.abi * VideoFunc.enhanceAbilityByVideo(newVideo)
+    thisAbi.abi += VideoFunc.enhanceAbilityByVideo(newVideo)
     
   },
   REMOVEVIDEO (state, video) {
@@ -67,7 +67,7 @@ const mutations = {
     thisVideo.online = true
     thisVideo.day = 1
     thisVideo.playtime = thisVideo.replaytime = VideoFunc.getPlaytimeDependVideo(state, thisVideo)
-    thisVideo.like = thisVideo.relike = VideoFunc.getLikeDependVideo(thisVideo)
+    thisVideo.like = VideoFunc.getLikeDependVideo(thisVideo)
     thisVideo.commits = thisVideo.recommits = VideoFunc.getCommitDependVideo(thisVideo)
 
     state.videoList[index] = thisVideo
@@ -81,15 +81,18 @@ const mutations = {
     state.power -= thisVideo.quality.costPower
   },
   DAILYCHANGE () {
+    let addedFollowerNum = 0
     state.videoList.forEach(function (video) {
       if (video.online) {
         video.day ++
         video.playtime += VideoFunc.getDeltPlayTimeDaily(video)
         video.like += VideoFunc.getDeltLikeDaily(video)
-        video.commits = video.commits.concat(VideoFunc.getUpdateCommitsDaily(video))
-        state.follower += VideoFunc.getFollowerChangeDaily(video)
+        // video.commits = video.commits.concat(VideoFunc.getUpdateCommitsDaily(video))
+        addedFollowerNum += VideoFunc.addedFollowerByVideo(video, state)
       }
     })
+    state.follower += addedFollowerNum
+    state.gold -= 100
   }
 }
 

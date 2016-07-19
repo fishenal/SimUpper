@@ -2,134 +2,81 @@ import Gau from 'gaussian'
 import _ from 'lodash'
 import { staticData } from './staticData'
 
+/*
+* 随机用户能力值
+* @param null
+* @return Array: abilities
+*/
 function getRandomUserAbilities () {
   let abilities = [];
-  // 能力高斯随机
-  let abilityDis = Gau(50, 0.05)
   _.forEach(staticData.typeList, function(item, key) {
     abilities.push({
       label: item.label,
-      abi: abilityDis.ppf(Math.random())
+      abi: parseInt(50 * _.random(0.5, 1.3))
     })
   })
   return abilities
 }
 
+/*
+* 计算视频得分
+* @param video
+* @param state
+* @return score (.00)
+*/
 function getScoreFromVideo (video, state) {
-  // 计算视频评分
-  let videoInnerQuality = 100
-  let score
-  // 相应种类视频技巧系数
-  let techRatio = state.abilities[video.type.id].abi / 100
-  videoInnerQuality *= techRatio
-  // 计算视频质量系数
-  let vQualityRatio
-  // 质量高斯随机
-  let highQualityDis = Gau(120, 0.4)
-  let midQualityDis = Gau(100, 0.3)
-  let lowQualityDis = Gau(50, 0.02)
-  let randomQualityDis = Gau(100, 0.1)
-  if (video.quality.id === 0) { //优良
-    vQualityRatio = highQualityDis.ppf(0.5)
+  let baseRatio = state.abilities[video.type.id].abi
+  let qualityRatio
+  switch (video.quality.id) {
+    case 0:
+      qualityRatio = _.random(1.1, 2.5)
+      break
+    case 1:
+      qualityRatio = _.random(0.8, 1.5)
+      break
+    case 2:
+      qualityRatio = _.random(0.3, 1)
+      break
   }
-  else if (video.quality.id === 1) { //中等
-    vQualityRatio = midQualityDis.ppf(0.5)
-  }
-  else if (video.quality.id === 2) { // 粗糙
-    vQualityRatio = lowQualityDis.ppf(0.5)
-  }
-  videoInnerQuality *= vQualityRatio / 100
-
-  // 质量随机系数 
-  let randomRatio = randomQualityDis.ppf(Math.random()) / 100
-  videoInnerQuality *= randomRatio
-  if (videoInnerQuality < 30) {
-    score = 'c--'
-  }
-  else if (videoInnerQuality < 60) {
-    score = 'c-'
-  }
-  else if (videoInnerQuality < 100) {
-    score = 'c'
-  }
-  else if (videoInnerQuality > 200) {
-    score = 'a++'
-  }
-  else if (videoInnerQuality > 160) {
-    score = 'a+'
-  }
-  else if (videoInnerQuality > 130) {
-    score = 'a'
-  }
-  else {
-    score = 'b'
-  }
-  console.log('视频质量', videoInnerQuality)
-  return score
+  let randomRatio = _.random(0.8, 1.2)
+  let score = baseRatio * qualityRatio * randomRatio
+  return score.toFixed(2)
 }
 
-function getAddGoldDependVideo (video) {
-  let gold = 0
-  if (video.score === 'a++') {
-    gold = 20
-  }
-  else if (video.score === 'a+') {
-    gold = 10
-  }
-  else if (video.score === 'a') {
-    gold = 5
-  }
-  return gold
-}
+
 /*
 * 计算播放量
-* @depend item.videoInnerQuality
-* @param item
-* @output playtime
-* @output rePlaytime
+* @param state
+* @param video
+* @return playtime (int)
 */
 function getPlaytimeDependVideo (state, video) {
-  // 计算播放量
   let follower = state.follower
-  let publishNum = state.videoList.length
-  // 播放量高斯随机
-  let follDis = Gau(50, 0.02)
-  let ptimeRanDis = Gau(100, 0.1)
-  let playtime =
-  follower + (follower * follDis.ppf(Math.random()) / 100)
-  * video.videoInnerQuality / 100
-  * ptimeRanDis.ppf(Math.random()) / 100
-  playtime = parseInt(playtime)
-  console.log('播放量：' + playtime)
-  return playtime
+  let playtime = follower * _.random(0.5, 2) * video.score / 100 * _.random(0.8, 1.2)
+  return parseInt(playtime)
 }
 
 
 /*
 * 计算like
-* @depend item.videoInnerQuality
-* @depend item.playtime
-* @param item
-* @output like
-* @output reLike
+* @param video
+* @return like
 */
 function getLikeDependVideo (video) {
   // 计算like
-  let likeQuality
-  // like高斯随机
-  let likeDis = Gau(20, 0.005)
+  let likeRio
   if (video.videoInnerQuality > 100) {
-    likeQuality = 1
+    likeRio = 0.4
   }
   else {
-    likeQuality = video.videoInnerQuality / 100
+    likeRio = _.random(0.1, 0.4)
   }
-  let like = parseInt(video.playtime * likeQuality * likeDis.ppf(Math.random()) / 100)
+  let like = parseInt(video.playtime * likeRio)
   return like
 }
 
 
-
+/*TODO*/
 /*
 * 计算评论
 * @depend item.like
@@ -230,42 +177,38 @@ function rtnCommitsByQual (video, length) {
   return commits
 }
 
-
+/*
+* 根据视频质量增加能力值
+* @param video
+* @return addAbi
+*/
 function enhanceAbilityByVideo (video) {
-  let abiIncreaseRio = 0
-  switch (video.score) {
-    case 'a++':
-      abiIncreaseRio = 0.03
-      break;
-    case 'a+':
-      abiIncreaseRio = 0.02
-      break;
-    case 'a':
-      abiIncreaseRio = 0.01
-      break;
-    case 'b':
-      break;
-    case 'c':
-      abiIncreaseRio = -0.01
-      break;
-    case 'c-':
-      abiIncreaseRio = -0.02
-      break;
-    case 'c--':
-      abiIncreaseRio = -0.03
-      break;
-  }
-  return abiIncreaseRio
+  let addAbi = video.score * _.random(0.8, 1.5) / 100
+  return parseInt(addAbi)
 }
 
+/*
+* 计算playtime增量
+* @param video
+* @return deltplaytime
+*/
 function getDeltPlayTimeDaily (video) {
-  return parseInt(Math.pow(video.rePlaytime / 3, video.day)) 
+  let increaseRio = Math.pow(0.8, video.day)
+  return parseInt(video.replaytime * increaseRio) 
 }
 
+/*
+* 计算like增量
+* @param video
+* @return deltlike
+*/
 function getDeltLikeDaily (video) {
-  return parseInt(Math.pow(video.reLike / 4, video.day)) 
+  let deltptime = getDeltPlayTimeDaily(video)
+  let increaseRio = Math.pow(0.3, video.day)
+  console.log(deltptime, increaseRio)
+  return parseInt(deltptime * increaseRio) 
 }
-
+/*TODO*/
 function getUpdateCommitsDaily (video) {
   let deltptime = getDeltPlayTimeDaily(video)
   let deltcommit = parseInt(Math.pow(rtnCommitsLen(deltptime, video) / 2, video.day))
@@ -276,17 +219,28 @@ function getUpdateCommitsDaily (video) {
   return newCommits
 }
 
-function getFollowerChangeDaily (video) {
-  let userFollDis = Gau(20, 0.05)
+/*
+* 根据视频计算粉丝增量
+* @param video
+* @param state
+* @return addedFollowerNum
+*/
+function addedFollowerByVideo (video, state) {
   let deltptime = getDeltPlayTimeDaily(video)
   let deltlike = getDeltLikeDaily(video)
-  return deltptime * userFollDis.ppf(Math.random()) / 100 + deltlike / 2
+  let deltAddtion = parseInt(deltptime * _.random(0.2, 0.5) + deltlike * _.random(0.5, 1))
+  let lostFollower = 0
+  if (Math.random() < (2 / video.score)) {
+    console.log('in lost')
+    lostFollower = parseInt(state.follower / video.score)
+    console.log(lostFollower)
+  }
+  return deltAddtion - lostFollower
 }
 
 export {
   getScoreFromVideo,
   getRandomUserAbilities,
-  getAddGoldDependVideo,
   getPlaytimeDependVideo,
   getLikeDependVideo,
   getCommitDependVideo,
@@ -294,5 +248,5 @@ export {
   getDeltPlayTimeDaily,
   getDeltLikeDaily,
   getUpdateCommitsDaily,
-  getFollowerChangeDaily
+  addedFollowerByVideo
 }
