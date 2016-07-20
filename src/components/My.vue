@@ -16,6 +16,12 @@
           <li v-for="item in abilities">
             {{ item.label }} : {{ item.abi }}
           </li>
+        </ul>
+        <h2>风格</h2>
+        <ul class="dt-list-3 dt-light">
+          <li v-for="item in styleAbilities">
+            {{ item.label }} : {{ item.abi }}
+          </li>
         </ul>   
     </div>  
   </div>
@@ -41,8 +47,9 @@ export default {
       follower: state => state.follower,
       power: state => state.power,
       gold: state => state.gold,
+      publishNum: state => state.videoList.length,
       abilities: state => state.abilities,
-      publishNum: state => state.videoList.length
+      styleAbilities: state => state.styleAbilities
     },
     actions: {
       nextDay,
@@ -51,6 +58,7 @@ export default {
     }
   },
   ready: function () {
+    console.log('in ready')
     this.randomAbilities()
   },
   methods: {

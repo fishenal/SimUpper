@@ -12,6 +12,7 @@ const VideoObjectModel = {
   playtime: 0,
   like: 0,
   commits: [],
+  commitsLength: 0,
   addGoodCommitsNum: 0,
   finishStatus: 0,
   online: false,
@@ -24,6 +25,7 @@ const state = {
   power: 100,
   gold: 999,
   abilities: [],
+  styleAbilities: [],
   videoList: [],
   staticData
 }
@@ -34,6 +36,7 @@ const mutations = {
   },
   RANDOMABILITIES (state) {
     state.abilities = VideoFunc.getRandomUserAbilities()
+    state.styleAbilities = VideoFunc.getRandomUserStyleAbilities()
   },
   ADDNEWVIDEO (state, props) {
     let vModel = Object.assign({}, VideoObjectModel)
@@ -58,6 +61,10 @@ const mutations = {
     })
     thisAbi.abi += VideoFunc.enhanceAbilityByVideo(newVideo)
     
+    let thisSAbi = _.find(state.styleAbilities, function (abi, index) {
+      return abi.label === newVideo.style.label
+    })
+    thisSAbi.abi += VideoFunc.enhanceAbilityByVideo(newVideo)
   },
   REMOVEVIDEO (state, video) {
     state.videoList.$remove(video)
@@ -68,7 +75,8 @@ const mutations = {
     thisVideo.day = 1
     thisVideo.playtime = thisVideo.replaytime = VideoFunc.getPlaytimeDependVideo(state, thisVideo)
     thisVideo.like = VideoFunc.getLikeDependVideo(thisVideo)
-    thisVideo.commits = thisVideo.recommits = VideoFunc.getCommitDependVideo(thisVideo)
+    thisVideo.commitsLength = VideoFunc.getCommitLengthFromVideo(thisVideo)
+    thisVideo.commits = VideoFunc.getSelectCommits(thisVideo)
 
     state.videoList[index] = thisVideo
   },
@@ -85,9 +93,14 @@ const mutations = {
     state.videoList.forEach(function (video) {
       if (video.online) {
         video.day ++
-        video.playtime += VideoFunc.getDeltPlayTimeDaily(video)
+        let deltaptime = VideoFunc.getDeltPlayTimeDaily(video)
+        let deltaCommitsLength = VideoFunc.getCommitLengthFromVideo(video, deltaptime)
+        video.playtime += deltaptime
         video.like += VideoFunc.getDeltLikeDaily(video)
-        // video.commits = video.commits.concat(VideoFunc.getUpdateCommitsDaily(video))
+        video.commitsLength += deltaCommitsLength
+        if (deltaCommitsLength !== 0) {
+          video.commits = VideoFunc.getSelectCommits(video)  
+        }
         addedFollowerNum += VideoFunc.addedFollowerByVideo(video, state)
       }
     })

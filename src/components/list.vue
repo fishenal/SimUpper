@@ -12,7 +12,7 @@
           <span>视频持续天数：{{item.day}}</span>
           <span>play times: {{item.playtime}}</span>
           <span>like: {{item.like}}</span>
-          <span>commits: {{item.commits.length}}</span>
+          <span>commits: {{item.commitsLength}}</span>
 
           <ul>
             <li v-for="cont in item.commits" track-by="$index">
