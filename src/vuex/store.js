@@ -24,15 +24,19 @@ const state = {
   follower: 100,
   power: 100,
   gold: 999,
-  abilities: [],
-  styleAbilities: [],
+  abilities: {},
+  styleAbilities: {},
   videoList: [],
+  abiChangeLog: [],// type, origin, addtion
+  styleAbiChangeLog: [],// type, origin, addtion
   staticData
 }
 
 const mutations = {
   DAYINCREASE (state) {
     state.day ++
+    state.power = 100
+    state.gold -= 100
   },
   RANDOMABILITIES (state) {
     state.abilities = VideoFunc.getRandomUserAbilities()
@@ -56,15 +60,15 @@ const mutations = {
     state.gold += parseInt(newVideo.score)
 
     // 能力增强
-    let thisAbi = _.find(state.abilities, function (abi, index) {
-      return abi.label === newVideo.type.label
-    })
-    thisAbi.abi += VideoFunc.enhanceAbilityByVideo(newVideo)
+    let abiAdd1 = VideoFunc.enhanceAbilityByVideo(newVideo)
+    let abiAdd2 = VideoFunc.enhanceAbilityByVideo(newVideo)
+    state.abiChangeLog = [newVideo.type.label, state.abilities[newVideo.type.label], abiAdd1]
+    state.abilities[newVideo.type.label] += abiAdd1
+
     
-    let thisSAbi = _.find(state.styleAbilities, function (abi, index) {
-      return abi.label === newVideo.style.label
-    })
-    thisSAbi.abi += VideoFunc.enhanceAbilityByVideo(newVideo)
+    state.styleAbiChangeLog = [newVideo.style.label, state.styleAbilities[newVideo.style.label], abiAdd2]
+    state.styleAbilities[newVideo.style.label] += abiAdd2
+
   },
   REMOVEVIDEO (state, video) {
     state.videoList.$remove(video)
@@ -105,7 +109,6 @@ const mutations = {
       }
     })
     state.follower += addedFollowerNum
-    state.gold -= 100
   }
 }
 

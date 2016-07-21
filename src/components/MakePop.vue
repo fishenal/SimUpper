@@ -54,7 +54,8 @@ export default {
     getters: {
       styleList: state => state.staticData.styleList,
       typeList: state => state.staticData.typeList,
-      qualityList: state => state.staticData.qualityList
+      qualityList: state => state.staticData.qualityList,
+      power: state => state.power
     },
     actions: {
       addNew
@@ -72,6 +73,10 @@ export default {
   },
   methods: {
     clickAddNew: function (props) {
+        if (this.power < props.quality.costPower) {
+            this.$dispatch('alert', '体力不足以制作该类视频')
+            return
+        }
         this.addNew(props)
         this.hide()
     },

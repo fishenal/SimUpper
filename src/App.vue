@@ -14,24 +14,30 @@
     <make-pop
     @onclose="hideMakeVideoPop"></make-pop>
   </div>
-  
+  <alert v-ref:alert></alert>
+  <change-log v-ref:changelog></change-log>
 </template>
 
 <script>
 import List from './components/list.vue'
 import My from './components/My.vue'
 import MakePop from './components/MakePop.vue'
+import Alert from './components/Alert.vue'
+import ChangeLog from './components/ChangeLog.vue'
 import store from './vuex/store'
 export default {
   components: {
     My,
     List,
-    MakePop
+    MakePop,
+    Alert,
+    ChangeLog
   },
   store,
   vuex: {
     getters: {
-      day: state => state.day,  
+      day: state => state.day,
+      power: state => state.power
     }
   },
   data () {
@@ -39,18 +45,25 @@ export default {
         isShowMakePop: false
     }
   },
-  watch: {
-  },
-  ready: function () {
-
-  },
   methods: {
     showMakePop: function () {
-      this.isShowMakePop = true
+        if (this.power <= 0) {
+            this.$refs.alert.show('没有体力了')
+            return
+        }
+        this.isShowMakePop = true
     },
     hideMakeVideoPop: function () {
       this.isShowMakePop = false
     },
+  },
+  events: {
+    alert: function (content) {
+        this.$refs.alert.show(content)
+    },
+    changeLog: function (content) {
+        this.$refs.changelog.add(content)
+    }
   }
 }
 </script>

@@ -7,12 +7,9 @@ import { staticData } from './staticData'
 * @return Array: abilities
 */
 function getRandomUserAbilities () {
-  let abilities = [];
+  let abilities = {};
   _.forEach(staticData.typeList, function(item, key) {
-    abilities.push({
-      label: item.label,
-      abi: parseInt(50 * _.random(0.5, 1.3))
-    })
+    abilities[item.label] = parseInt(50 * _.random(0.5, 1.3))
   })
   return abilities
 }
@@ -23,12 +20,9 @@ function getRandomUserAbilities () {
 * @return Array: abilities
 */
 function getRandomUserStyleAbilities () {
-  let abilities = [];
+  let abilities = {};
   _.forEach(staticData.styleList, function(item, key) {
-    abilities.push({
-      label: item.label,
-      abi: parseInt(50 * _.random(0.5, 1.3))
-    })
+    abilities[item.label] = parseInt(50 * _.random(0.5, 1.3))
   })
   return abilities
 }
@@ -41,7 +35,7 @@ function getRandomUserStyleAbilities () {
 */
 function getScoreFromVideo (video, state) {
   let baseRatio =
-  (state.abilities[video.type.id].abi + state.styleAbilities[video.style.id].abi) / 2
+  (state.abilities[video.type.label] + state.styleAbilities[video.style.label]) / 2
   let qualityRatio
   switch (video.quality.id) {
     case 0:
@@ -186,7 +180,13 @@ function enhanceAbilityByVideo (video) {
 * @return deltplaytime
 */
 function getDeltPlayTimeDaily (video) {
-  let increaseRio = Math.pow(0.8, video.day)
+  let increaseRio
+  if (video.day > 50) {
+    increaseRio = 0
+  }
+  else {
+    increaseRio = Math.pow(0.8, video.day)
+  }
   return parseInt(video.replaytime * increaseRio) 
 }
 
@@ -197,8 +197,13 @@ function getDeltPlayTimeDaily (video) {
 */
 function getDeltLikeDaily (video) {
   let deltptime = getDeltPlayTimeDaily(video)
-  let increaseRio = Math.pow(0.3, video.day)
-  console.log(deltptime, increaseRio)
+  let increaseRio
+  if (video.day > 50) {
+    increaseRio = 0
+  }
+  else {
+    increaseRio = Math.pow(0.3, video.day)
+  }
   return parseInt(deltptime * increaseRio) 
 }
 
